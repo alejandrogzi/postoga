@@ -1,10 +1,20 @@
 #!/usr/bin/env python3
 
+"""
+Master script for postoga. 
+
+postoga is a tool that automates the post-processing of TOGA results.
+At its core, this tool takes a TOGA results directory and produces
+a series of steps to reduce the amount of manual work required to pre-process
+files for downstream analysis.
+"""
+
 
 __author__ = "Alejandro Gonzales-Irribarren"
 __version__ = "0.1.0"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
+
 
 
 import os
@@ -14,7 +24,12 @@ import argparse
 import sys
 import subprocess
 import time
+# from modules.constants import Constants
+# from version import __version__
 
+
+BED2GTF = "bed2gtf"
+BED2GFF = "bed2gff"
 
 
 def toga_table(args: argparse.Namespace) -> pd.DataFrame:
@@ -87,7 +102,7 @@ def write_isoforms(args: argparse.Namespace, table: pd.DataFrame):
     table = table.iloc[:,[0,2]]
     table.to_csv(f, sep="\t", header=None, index=False)
 
-    return
+    return f
 
 
 
@@ -127,6 +142,52 @@ def filter_bed(args: argparse.Namespace, table: pd.DataFrame) -> str:
 
 
 
+def shell(cmd):
+    """ 
+    Run a shell command and return the output as a string
+    
+    @type cmd: str
+    @param cmd: shell command
+    """
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    return result.stdout.strip()
+
+
+
+def bed_to_gtf(bed: str, isoforms: str):
+    """
+    Converts a .bed file to .gtf
+
+    @type bed: str
+    @param bed: path to .bed file
+    @type isoforms: str
+    @param isoforms: path to the isoforms file
+    """
+    gtf = f"{bed.split('.')[0]}.gtf"
+    cmd = f"{BED2GTF} {bed} {isoforms} {gtf}"
+    sh = shell(cmd)
+
+    return gtf
+
+
+
+def bed_to_gff(bed: str, isoforms: str):
+    """
+    Converts a .bed file to .gff
+
+    @type bed: str
+    @param bed: path to .bed file
+    @type isoforms: str
+    @param isoforms: path to the isoforms file
+    """
+    gff = f"{bed.split('.')[0]}.gff"
+    cmd = f"{BED2GFF} {bed} {isoforms} {gff}"
+    sh = shell(cmd)
+
+    return gff
+
+
+
 def run(args: argparse.Namespace):
     """
     The postoga runner function
@@ -134,17 +195,22 @@ def run(args: argparse.Namespace):
     @type args: subprocess.Namespace
     @param args: defined arguments
     """
+
     # Get the toga table and write isoforms
     table = toga_table(args)
-    write_isoforms(args, table)
+    isoforms = write_isoforms(args, table)
 
     # Filtering step (if any)
-    if any(args.by_class, args.by_rel, args.threshold):
+    if any([args.by_class, args.by_rel, args.threshold]):
         bed = filter_bed(args, table)
     else:
         bed = f"{args.path}/query_annotation.bed"
 
-
+    # Conversion step
+    if args.to == "gtf":
+        bed_to_gtf(bed, isoforms)
+    elif args.to == "gff":
+        bed_to_gff(bed, isoforms)
 
 
     return
@@ -177,9 +243,17 @@ def parser():
     app.add_argument(
         "-thold",
         "--threshold",
-        help="Filter parameter to preserve orthology scores above a given treshold (0.0 - 1.0)",
+        help="Filter parameter to preserve orthology scores greater or equal a given threshold (0.0 - 1.0)",
         required=False,
         type=str
+    )
+    app.add_argument(
+        "-to",
+        "--to",
+        help="Specify the conversion format for .bed (query_annotation/filtered) file (gtf, gff3)",
+        required=True,
+        type=str,
+        choices=["gtf", "gff"]
     )
 
     if len(sys.argv) < 1:
@@ -192,7 +266,7 @@ def parser():
 
 def main():
     args = parser()
-    # run(args.path)
+    run(args)
 
 
 if __name__ == "__main__":
