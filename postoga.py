@@ -11,7 +11,7 @@ files for downstream analysis.
 
 
 __author__ = "Alejandro Gonzales-Irribarren"
-__version__ = "0.1.0"
+__version__ = "0.1.0-devel"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
 
@@ -24,12 +24,9 @@ import argparse
 import sys
 import subprocess
 import time
-# from modules.constants import Constants
+from modules.constants import Constants
 # from version import __version__
 
-
-BED2GTF = "bed2gtf"
-BED2GFF = "bed2gff"
 
 
 def toga_table(args: argparse.Namespace) -> pd.DataFrame:
@@ -45,10 +42,11 @@ def toga_table(args: argparse.Namespace) -> pd.DataFrame:
     # loss_sum_data, and ortholog_scores. These three files contain all the universe
     # of transcripts evaluated by TOGA. It initates by reading those three files as
     # pandas DataFrames.
-    orthology = pd.read_csv(f"{args.path}/orthology_classification.tsv", sep="\t")
-    loss = pd.read_csv(f"{args.path}/loss_summ_data.tsv", sep="\t", header=None, names=["projection", "transcript", "class"])
-    score = pd.read_csv(f"{args.path}/temp/orthology_scores.tsv", sep="\t")
-    isoforms = pd.read_csv(f"{args.path}/temp/isoforms.tsv", sep="\t", header=None)
+
+    orthology = pd.read_csv(os.path.join(args.path, Constants.FileNames.ORTHOLOGY), sep="\t")
+    loss = pd.read_csv(os.path.join(args.path, Constants.FileNames.CLASS), sep="\t", header=None, names=["projection", "transcript", "class"])
+    score = pd.read_csv(os.path.join(args.path, Constants.FileNames.SCORES), sep="\t")
+    isoforms = pd.read_csv(os.path.join(args.path, Constants.FileNames.ISOFORMS), sep="\t", header=None)
 
     # Creates a dictionary: transcript -> gene
     isoforms_dict = isoforms.set_index(1).to_dict().get(0)
@@ -96,7 +94,7 @@ def write_isoforms(args: argparse.Namespace, table: pd.DataFrame):
     @type table: pd.DataFrame
     @param table: a pandas DataFrame
     """
-    f = f"{args.path}/isoforms.txt"
+    f = os.path.join(args.path, Constants.FileNames.OWNED_ISOFORMS)
     
     # Get only gene:transcript pairs
     table = table.iloc[:,[0,2]]
@@ -132,13 +130,13 @@ def filter_bed(args: argparse.Namespace, table: pd.DataFrame) -> str:
 
 
     # Read the original .bed file and filter it based on the transcripts table
-    bed = pd.read_csv(f"{args.path}/query_annotation.bed", sep="\t", header=None)
+    bed = pd.read_csv(os.path.join(args.path, Constants.FileNames.BED), sep="\t", header=None)
     bed = bed[bed[3].isin(table["transcripts"])]
 
     # Write the filtered .bed file
-    bed.to_csv(f"{args.path}/filtered.bed", sep="\t", header=None, index=False)
+    bed.to_csv(os.path.join(args.path, Constants.FileNames.FILTERED_BED), sep="\t", header=None, index=False)
 
-    return f"{args.path}/filtered.bed"
+    return os.path.join(args.path, Constants.FileNames.FILTERED_BED)
 
 
 
@@ -163,8 +161,9 @@ def bed_to_gtf(bed: str, isoforms: str):
     @type isoforms: str
     @param isoforms: path to the isoforms file
     """
+
     gtf = f"{bed.split('.')[0]}.gtf"
-    cmd = f"{BED2GTF} {bed} {isoforms} {gtf}"
+    cmd = f"{Constants.ToolNames.BED2GTF} {bed} {isoforms} {gtf}"
     sh = shell(cmd)
 
     return gtf
@@ -181,7 +180,7 @@ def bed_to_gff(bed: str, isoforms: str):
     @param isoforms: path to the isoforms file
     """
     gff = f"{bed.split('.')[0]}.gff"
-    cmd = f"{BED2GFF} {bed} {isoforms} {gff}"
+    cmd = f"{Constants.ToolNames.BED2GFF} {bed} {isoforms} {gff}"
     sh = shell(cmd)
 
     return gff
