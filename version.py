@@ -16,7 +16,7 @@ class Version:
         self.color = "blue"
         self.version_repr = f"{major}.{minor}.{patch}"
         if self.dev:
-            self.version_repr += f"-devel"
+            self.version_repr += f"--devel"
             self.color = "orange"
 
     def update_readme(self, filename="README.md"):
