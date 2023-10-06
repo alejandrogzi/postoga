@@ -15,8 +15,10 @@ class Version:
         self.dev = dev
         self.color = "blue"
         self.version_repr = f"{major}.{minor}.{patch}"
+        self.readme_repr = self.version_repr
         if self.dev:
-            self.version_repr += f"--devel"
+            self.version_repr += f"-devel"
+            self.readme_repr += f"--devel"
             self.color = "orange"
 
     def update_readme(self, filename="README.md"):
@@ -26,7 +28,7 @@ class Version:
         with open(filename, "w") as f:
             for line in lines:
                 if "img.shields.io/badge/version-" in line:
-                    line = f"![version](https://img.shields.io/badge/version-{self.version_repr}-{self.color})\n"
+                    line = f"![version](https://img.shields.io/badge/version-{self.readme_repr}-{self.color})\n"
                 f.write(line)
 
     def __repr__(self):
