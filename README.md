@@ -8,7 +8,7 @@ The post-TOGA processing pipeline.
 
 TO DO's
 
-- [ ] Build logger/version/constants scripts
+- [X] Build logger/version/constants scripts
 
 - [x] postoga STEP 1: automate conversion from bed to gtf/gff -> bed2gtf will implement a sorting leaving dependecy on gtfsort (something already implemented in bed2gff)
 
