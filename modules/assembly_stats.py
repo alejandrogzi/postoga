@@ -22,7 +22,7 @@ from modules.utils import bed_reader, ancestral_reader
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = ""
+__version__ = "0.4.0-devel"
 
 
 def get_classes(path: str, bed: str, table: pd.DataFrame) -> pd.DataFrame:
