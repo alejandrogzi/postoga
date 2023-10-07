@@ -12,13 +12,12 @@ TOGA results for downstream analysis.
 
 
 import os
-from version import __version__
 
 
 __author__ = "Alejandro Gonzales-Irribarren"
-__version__ = __version__
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
+__version__ = "0.4.0-devel"
 __credits__ = ["Bogdan Kirilenko"]
 
 
@@ -35,10 +34,12 @@ class Constants:
         "many2many": "m2m",
         "one2zero": "o2z",
     }
+    ORDER = {"I": 1, "PI": 2, "UL": 3, "L": 4, "M": 5, "PM": 6, "PG": 7, "abs": 8}
 
     class ToolNames:
         BED2GTF = "bed2gtf"
         BED2GFF = "bed2gff"
+        COMPLEASM = "compleasm"
 
     class FileNames:
         ORTHOLOGY = "orthology_classification.tsv"
@@ -57,6 +58,7 @@ class Constants:
         SCORES = os.path.join("temp", "orthology_scores.tsv")
         LOG = "postoga.log"
         QUALITY = os.path.join("temp", "transcript_quality.tsv")
+        ANCESTRAL = os.path.join("./supply", "Ancestral_placental.txt")
 
     class Commands:
         COMMIT = "git rev-parse --short HEAD"
