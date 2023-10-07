@@ -8,6 +8,7 @@ The post-TOGA processing pipeline.
 
 ## What's new on version 0.4.0-devel
 
+
 - splited main functions in ordered modules following TogaDir class layout (`filter_bed` will be improved in v.0.5.0-devel)
 - improved logging (specifies some stats about annotation or filtered annotation [if user choose to filter it]) + connect() method to call it within a module (`bed2gtf`/`bed2gff` log info bothers the structure of postoga log -> will be fixed in v.0.5.0-devel)
 - included `transcripts.quality.tsv` in query_table() and calculates some stats about it (included in logging)
