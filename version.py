@@ -3,8 +3,11 @@
 """Version handler for postoga."""
 
 
+import os
+
+
 __author__ = "Alejandro Gonzales-Irribarren"
-__credits__ = "Bogdan M. Kirilenko"
+__credits__ = ["Bogdan M. Kirilenko"]
 
 
 class Version:
@@ -29,7 +32,34 @@ class Version:
             for line in lines:
                 if "img.shields.io/badge/version-" in line:
                     line = f"![version](https://img.shields.io/badge/version-{self.readme_repr}-{self.color})\n"
+                elif "## What's new" in line:
+                    line = f"## What's new on version {self.version_repr}\n\n"
                 f.write(line)
+
+    def get_py_scripts(self):
+        scripts = []
+        for root, dirs, files in os.walk("."):
+            for file in files:
+                if file.endswith(".py"):
+                    if file != "version.py":
+                        scripts.append(os.path.join(root, file))
+        return scripts
+
+    def check_uncomitted(self, file):
+        cmd = f"git diff --exit-code {file}"
+        return os.system(cmd) != 0
+
+    def update_scripts(self):
+        scripts = self.get_py_scripts()
+        for script in scripts:
+            if self.check_uncomitted(script):
+                with open(script, "r") as f:
+                    lines = f.readlines()
+                with open(script, "w") as f:
+                    for line in lines:
+                        if "__version__ =" in line:
+                            line = f'__version__ = "{self.version_repr}"\n'
+                        f.write(line)
 
     def __repr__(self):
         return self.version_repr
@@ -38,8 +68,9 @@ class Version:
         return self.version_repr
 
 
-__version__ = Version(0, 2, 0, dev=True)
+__version__ = Version(0, 4, 0, dev=True)
 
 if __name__ == "__main__":
     print(f"postoga v.{__version__}")
     __version__.update_readme()
+    __version__.update_scripts()
