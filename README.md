@@ -37,7 +37,7 @@ branch: master
 
 Here is a descrption of postoga features:
 
-```python
+```text
 usage: postoga.py [-h] {base,haplotype}
 
 positional arguments:
@@ -46,11 +46,11 @@ positional arguments:
     haplotype       Haplotype mode
 ```
 
-```python
+```text
 usage: postoga.py base [-h] -p PATH [-bc BY_CLASS] [-br BY_REL] [-th THRESHOLD] -to {gtf,gff} [-aq ASSEMBLY_QUAL]
 
 optional arguments:
-  -h, --help            show this help message and exit
+  -h, --help            Display help message
   -p PATH, --path PATH  Path to TOGA results directory
   -bc BY_CLASS, --by-class BY_CLASS
                         Filter parameter to only include certain orthology classes (I, PI, UL, M, PM, L, UL)
@@ -64,16 +64,16 @@ optional arguments:
                         Calculate assembly quality based on a list of genes provided by the user (default: Ancestral_placental.txt)
 ```
 
-```python
+```text
 usage: postoga.py haplotype [-h] -hp HAPLOTYPE_PATH [-r RULE] [-s {query,loss}]
 
 optional arguments:
-  -h, --help            show this help message and exit
+  -h, --help            Display help message
   -hp HAPLOTYPE_PATH, --haplotype_path HAPLOTYPE_PATH
                         Path to TOGA results directories separated by commas (path1,path2,path3)
-  -r RULE, --rule RULE  Rule to merge haplotype assemblies (default: I>PI>UL>L>M>PM>PG>abs)
+  -r RULE, --rule RULE  Rule to merge haplotype assemblies (default: I>PI>UL>L>M>PM>PG>NF)
   -s {query,loss}, --source {query,loss}
-                        Source of the haplotype classes (query, loss)
+                        Source of the haplotype classes (default: loss)
 ```
 
 
