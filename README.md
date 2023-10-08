@@ -1,23 +1,93 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-![version](https://img.shields.io/badge/version-0.4.0--devel-orange)
+![version](https://img.shields.io/badge/version-0.5.0--devel-orange)
 
 # postoga
 
 The post-TOGA processing pipeline.
 
+## Usage
 
-## What's new on version 0.4.0-devel
+To use postoga, just do:
+
+```bash
+# clone the repository
+git clone https://github.com/alejandrogzi/postoga.git
+cd postoga
+
+# call configure.sh to install dependencies
+./configure.sh
+
+# run a test to confirm functionality
+./test.sh
+```
+
+If you see something like this at then end, postoga is ready!:
+
+```text
+####################################
+postoga: the post-TOGA processing pipeline
+version: 0.5.0-devel
+commit: 3db4905
+branch: master
+
+[XXXXXX] - INFO: postoga started!
+[XXXXXX] - INFO: running in mode base with arguments: {'mode': 'base', 'path': './supply/test/', 'by_class': None, 'by_rel': None, 'threshold': '0.5', 'to': 'gtf', 'assembly_qual': './supply/Ancestral_placental.txt'}
+[XXXXXX] - INFO: found 133057 projections, 91330 unique transcripts, 19882 unique genes
+```
+
+Here is a descrption of postoga features:
+
+```python
+usage: postoga.py [-h] {base,haplotype}
+
+positional arguments:
+  {base,haplotype}  Select mode
+    base            Base mode
+    haplotype       Haplotype mode
+```
+
+```python
+usage: postoga.py base [-h] -p PATH [-bc BY_CLASS] [-br BY_REL] [-th THRESHOLD] -to {gtf,gff} [-aq ASSEMBLY_QUAL]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -p PATH, --path PATH  Path to TOGA results directory
+  -bc BY_CLASS, --by-class BY_CLASS
+                        Filter parameter to only include certain orthology classes (I, PI, UL, M, PM, L, UL)
+  -br BY_REL, --by-rel BY_REL
+                        Filter parameter to only include certain orthology relationships (o2o, o2m, m2m, m2m, o2z)
+  -th THRESHOLD, --threshold THRESHOLD
+                        Filter parameter to preserve orthology scores greater or equal to a given threshold (0.0 - 1.0)
+  -to {gtf,gff}, --to {gtf,gff}
+                        Specify the conversion format for .bed (query_annotation/filtered) file (gtf, gff3)
+  -aq ASSEMBLY_QUAL, --assembly_qual ASSEMBLY_QUAL
+                        Calculate assembly quality based on a list of genes provided by the user (default: Ancestral_placental.txt)
+```
+
+```python
+usage: postoga.py haplotype [-h] -hp HAPLOTYPE_PATH [-r RULE] [-s {query,loss}]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -hp HAPLOTYPE_PATH, --haplotype_path HAPLOTYPE_PATH
+                        Path to TOGA results directories separated by commas (path1,path2,path3)
+  -r RULE, --rule RULE  Rule to merge haplotype assemblies (default: I>PI>UL>L>M>PM>PG>abs)
+  -s {query,loss}, --source {query,loss}
+                        Source of the haplotype classes (query, loss)
+```
 
 
-- splited main functions in ordered modules following TogaDir class layout (`filter_bed` will be improved in v.0.5.0-devel)
-- improved logging (specifies some stats about annotation or filtered annotation [if user choose to filter it]) + connect() method to call it within a module (`bed2gtf`/`bed2gff` log info bothers the structure of postoga log -> will be fixed in v.0.5.0-devel)
-- included `transcripts.quality.tsv` in query_table() and calculates some stats about it (included in logging)
-- re-implemented `TOGA_assemblyStats.py` to estimate annotation completeness in single mode and haplotype-resolved assemblies -> `--assembly_qual` (to specify genes db -> tab-separated file [.txt,.tsv,.csv,...]; default ancestral); `--haplotype_path` (to specify path of both haplotypes) -> the equivalent of `TOGA_assemblyStats.py -m stats` && `TOGA_assemblyStats.py -m stats -ances ./ances.txt` is completed, `TOGA_assemblyStats.py -m merge` will be available in v.0.5.0-devel.
-- postoga now automates: 1) dependencies [v.0.5.0-devel], 2) filtering, 3) conversion, 4) assembly quality estimation (just 1/4 quality steps postoga will have)
-- shell is now `utils.py` (postoga base utility module)
-- added https://github.com/hillerlab/TOGA/blob/master/TOGAInput/human_hg38/Ancestral_placental.txt to `./supply/Ancestral_placental.txt` 
+## What's new on version 0.5.0-devel
 
 
+- postoga fully works now on two modes `postoga base` & `postoga haplotype`
+- base/haplo branches initiate own logs (haplo branch chooses the first path of the list provided)
+- fixed filter_bed() module -> handles different filter combinations (`--by_class`, `--by_rel`, `--threshold`)
+- removed unnecessary imports in all modules
+- `TOGA_assemblyStats.py -m merge` is now fully functional in postoga under `postoga haplotypes -hpath path1,path2,path3 --source [query, loss] --rule I>PI>UL>L>M>PM>PG>abs`.
+- logger.py is automatically updated with the current version
+- postoga now automates installing requirements (python/rust) through `./configure sh`
+- implemented `test.sh` to make an initial test with random data in `./supply/test`
 
 
 
@@ -27,9 +97,11 @@ The post-TOGA processing pipeline.
 
 - [x] postoga STEP 1: automate conversion from bed to gtf/gff -> bed2gtf will implement a sorting leaving dependecy on gtfsort (something already implemented in bed2gff
 
+- [ ] test model with different naming nomenclatures (most recent TOGA versions)
+
 - [ ] Handle possible warnings of data (low number of intact genes, etc) within log file (?)
 
-- [ ] Check/install/test requeriments (install_dependencies.py) -> rust, cargo, binaries (bed2gtf, bed2gff), compleasm (?)
+- [x] Check/install/test requeriments (install_dependencies.py) -> rust, cargo, binaries (bed2gtf, bed2gff), compleasm (?)
 
 - [x] postoga STEP 2: assembly stats re-implementation -> https://github.com/hillerlab/TOGA/blob/master/supply/TOGA_assemblyStats.py
 
