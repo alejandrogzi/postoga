@@ -12,25 +12,22 @@ files for downstream analysis.
 
 
 import os
-import pandas as pd
-import numpy as np
 import argparse
 import sys
-import subprocess
-import time
 from constants import Constants
-from version import __version__
 from logger import Log
-from modules.utils import shell, bed_reader
 from modules.convert_from_bed import bed_to_gtf, bed_to_gff
 from modules.make_query_table import query_table
 from modules.write_isoforms import isoform_writer
+from modules.filter_query_annotation import filter_bed
 from modules.assembly_stats import qual_by_ancestral
+from modules.haplotype_branch import merge_haplotypes
+
 
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.4.0-devel"
+__version__ = "0.5.0-devel"
 
 
 class TogaDir:
@@ -44,7 +41,6 @@ class TogaDir:
         @param args: defined arguments
         """
 
-        self.log = Log(args.path, Constants.FileNames.LOG)
         self.mode = args.mode
         self.args = args
 
@@ -54,91 +50,16 @@ class TogaDir:
             self.path = args.path
             self.to = args.to
             self.q_assembly = args.assembly_qual
-
-            if args.by_class:
-                self.by_class = args.by_class
-            if args.by_rel:
-                self.by_rel = args.by_rel
-            if args.threshold:
-                self.threshold = args.threshold
-
+            self.log = Log(args.path, Constants.FileNames.LOG)
+            self.by_class = args.by_class if args.by_class else None
+            self.by_rel = args.by_rel if args.by_rel else None
+            self.threshold = args.threshold if args.threshold else None
         else:
             """The haplotype branch of postoga"""
             self.paths = args.haplotype_path.split(",")
             self.rule = args.rule.split(">")
-
-    def filter_bed(self) -> str:
-        """Filters the original .bed file to produce a custom filtered file"""
-
-        initial = len(self.table)
-
-        if self.threshold:
-            table = self.table[self.table["pred"] >= float(self.threshold)]
-            self.log.record(
-                f"discarded {initial - len(table)} projections with orthology scores <{self.threshold}"
-            )
-
-        if self.by_class:
-            edge = len(table)
-            table = table[table["class"].isin(self.by_class.split(","))]
-            self.log.record(
-                f"discarded {edge - len(table)} projections with classes other than {self.by_class}"
-            )
-
-        if self.by_rel:
-            edge = len(table)
-            table = table[table["relation"].isin(self.by_rel.split(","))]
-            self.log.record(
-                f"discarded {edge - len(table)} projections with relationships other than {self.by_rel}"
-            )
-
-        # Read the original .bed file and filter it based on the transcripts table
-        bed = pd.read_csv(
-            os.path.join(self.path, Constants.FileNames.BED), sep="\t", header=None
-        )
-        bed = bed[bed[3].isin(table["transcripts"])]
-        custom_table = table[table["transcripts"].isin(bed[3])]
-
-        # Write the filtered .bed file
-        f = os.path.join(self.path, Constants.FileNames.FILTERED_BED)
-        bed.to_csv(
-            f,
-            sep="\t",
-            header=None,
-            index=False,
-        )
-
-        info = [
-            f"kept {len(bed)} projections after filters, discarded {initial - len(bed)}.",
-            f"{len(bed)} projections are coming from {len(custom_table['helper'].unique())} unique transcripts and {len(custom_table['t_gene'].unique())} genes",
-            f"class stats of new bed: {custom_table['class'].value_counts().to_dict()}",
-            f"relation stats of new bed: {custom_table['relation'].value_counts().to_dict()}",
-            f"confidence stats of new bed: {custom_table['confidence_level'].value_counts().to_dict()}",
-            f"filtered bed file written to {f}",
-        ]
-
-        [self.log.record(i) for i in info]
-
-        return f
-
-    def get_haplotype_classes(self) -> None:
-        """
-        @type paths: str
-        @param paths: comma separated paths to TOGA results directories
-
-        cmd: postoga -m haplotypes -hpath path1,path2,path3
-        """
-        paths = self.paths
-        dfs = []
-
-        # For each path build a query table and filtered based on queries annotated
-        for path in paths:
-            table = query_table(path)
-            bed = bed_reader(path)
-            df = table[table["transcripts"].isin(bed[3])]
-            dfs.append(df)
-
-        return dfs
+            self.source = args.source
+            self.log = Log(self.paths[0], Constants.FileNames.LOG)
 
     def run(self) -> None:
         """
@@ -160,7 +81,9 @@ class TogaDir:
             self.isoforms = isoform_writer(self.path, self.table)
 
             if any([self.by_class, self.by_rel, self.threshold]):
-                self.bed = self.filter_bed()
+                self.bed = filter_bed(
+                    self.path, self.table, self.by_class, self.by_rel, self.threshold
+                )
             else:
                 self.bed = os.path.join(self.path, Constants.FileNames.BED)
 
@@ -170,48 +93,42 @@ class TogaDir:
                 self.gff = bed_to_gff(self.path, self.bed, self.isoforms)
 
             ##### STEP 2 #####
-            qual_by_ancestral(self.path, self.bed, self.table, self.q_assembly)
+            _ = qual_by_ancestral(self.path, self.bed, self.table, self.q_assembly)
+
+            self.log.close()
 
         else:
-            hap_classes = self.get_haplotype_classes()
+            hap_classes = merge_haplotypes(self.paths, self.source, self.rule)
+            self.log.close()
 
 
-def parser():
-    """Argument parser for postoga"""
-    app = argparse.ArgumentParser()
-    app.add_argument(
-        "-m",
-        "--mode",
-        help="Run mode",
-        type=str,
-        choices=["default", "haplotype"],
-        default="default",
-    )
-    app.add_argument(
+def base_branch(subparsers):
+    base_parser = subparsers.add_parser("base", help="Base mode")
+    base_parser.add_argument(
         "-p", "--path", help="Path to TOGA results directory", required=True, type=str
     )
-    app.add_argument(
+    base_parser.add_argument(
         "-bc",
         "--by-class",
         help="Filter parameter to only include certain orthology classes (I, PI, UL, M, PM, L, UL)",
         required=False,
         type=str,
     )
-    app.add_argument(
-        "-brel",
+    base_parser.add_argument(
+        "-br",
         "--by-rel",
         help="Filter parameter to only include certain orthology relationships (o2o, o2m, m2m, m2m, o2z)",
         required=False,
         type=str,
     )
-    app.add_argument(
-        "-thold",
+    base_parser.add_argument(
+        "-th",
         "--threshold",
-        help="Filter parameter to preserve orthology scores greater or equal a given threshold (0.0 - 1.0)",
+        help="Filter parameter to preserve orthology scores greater or equal to a given threshold (0.0 - 1.0)",
         required=False,
         type=str,
     )
-    app.add_argument(
+    base_parser.add_argument(
         "-to",
         "--to",
         help="Specify the conversion format for .bed (query_annotation/filtered) file (gtf, gff3)",
@@ -219,7 +136,7 @@ def parser():
         type=str,
         choices=["gtf", "gff"],
     )
-    app.add_argument(
+    base_parser.add_argument(
         "-aq",
         "--assembly_qual",
         help="Calculate assembly quality based on a list of genes provided by the user (default: Ancestral_placental.txt)",
@@ -227,32 +144,49 @@ def parser():
         type=str,
         default=Constants.FileNames.ANCESTRAL,
     )
-    app.add_argument(
-        "-hpath",
+
+
+def haplotype_branch(subparsers):
+    haplotype_parser = subparsers.add_parser("haplotype", help="Haplotype mode")
+    haplotype_parser.add_argument(
+        "-hp",
         "--haplotype_path",
-        help="Path to haplotype directory",
-        required=False,
+        help="Path to TOGA results directories separated by commas (path1,path2,path3)",
+        required=True,
         type=str,
     )
-    app.add_argument(
+    haplotype_parser.add_argument(
         "-r",
         "--rule",
         help="Rule to merge haplotype assemblies (default: I>PI>UL>L>M>PM>PG>abs)",
         required=False,
         type=str,
-        default="I>PI>UL>L>M>PM>PG>abs",
+        default="I>PI>UL>L>M>PM>PG>NF",
     )
+    haplotype_parser.add_argument(
+        "-s",
+        "--source",
+        help="Source of the haplotype classes (query, loss)",
+        required=False,
+        type=str,
+        choices=["query", "loss"],
+        default="loss",
+    )
+
+
+def parser():
+    """Argument parser for postoga"""
+    app = argparse.ArgumentParser()
+    subparsers = app.add_subparsers(dest="mode", help="Select mode")
+
+    base_branch(subparsers)
+    haplotype_branch(subparsers)
 
     if len(sys.argv) < 2:
         app.print_help()
         sys.exit(0)
 
     args = app.parse_args()
-
-    if args.mode == "haplotype" and not args.haplotype_path:
-        app.error(
-            "haplotype mode requires the path to the haplotype directory, please provide it with the -hpath/--haplotype_path argument"
-        )
 
     return args
 
