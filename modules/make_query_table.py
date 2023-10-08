@@ -5,8 +5,6 @@
 
 import os
 import pandas as pd
-import numpy as np
-import argparse
 from constants import Constants
 from logger import Log
 
@@ -14,7 +12,7 @@ from logger import Log
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.4.0-devel"
+__version__ = "0.5.0-devel"
 
 
 def query_table(path: str) -> pd.DataFrame:

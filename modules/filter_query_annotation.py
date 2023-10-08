@@ -4,9 +4,7 @@
 """ A module to filter the original .bed file based on the query table."""
 
 
-import argparse
 import pandas as pd
-import numpy as np
 import os
 from constants import Constants
 from logger import Log
@@ -15,54 +13,58 @@ from logger import Log
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.4.0-devel"
+__version__ = "0.5.0-devel"
 
 
-def filter_bed(args: argparse.Namespace, table: pd.DataFrame) -> str:
+def filter_bed(
+    path: str, table: pd.DataFrame, by_class: list, by_rel: list, threshold: str
+) -> str:
     """
     Filters the original .bed file to produce a custom filtered file
 
-    @type args: subprocess.Namespace
-    @param args: defined arguments
+    @type path: str
+    @param path: path to the directory where the files will be written
+    @type log: Log
+    @param log: logger object to record messages
     @type table: pd.DataFrame
     @param table: a pandas DataFrame
-    @rtype: str
-    @return path: path to filtered file
+    @param threshold: Threshold for filtering
+    @param by_class: Filter by class
+    @param by_rel: Filter by relation
     """
 
-    log = Log.connect(args.path, Constants.FileNames.LOG)
-
+    log = Log.connect(path, Constants.FileNames.LOG)
     initial = len(table)
 
-    if args.threshold:
-        table = table[table["pred"] >= float(args.threshold)]
+    if threshold:
+        table = table[table["pred"] >= float(threshold)]
         log.record(
-            f"discarded {initial - len(table)} projections with orthology scores <{args.threshold}"
+            f"discarded {initial - len(table)} projections with orthology scores <{threshold}"
         )
 
-    if args.by_class:
+    if by_class:
         edge = len(table)
-        table = table[table["class"].isin(args.by_class.split(","))]
+        table = table[table["class"].isin(by_class.split(","))]
         log.record(
-            f"discarded {edge - len(table)} projections with classes other than {args.by_class}"
+            f"discarded {edge - len(table)} projections with classes other than {by_class}"
         )
 
-    if args.by_rel:
+    if by_rel:
         edge = len(table)
-        table = table[table["relation"].isin(args.by_rel.split(","))]
+        table = table[table["relation"].isin(by_rel.split(","))]
         log.record(
-            f"discarded {edge - len(table)} projections with relationships other than {args.by_rel}"
+            f"discarded {edge - len(table)} projections with relationships other than {by_rel}"
         )
 
     # Read the original .bed file and filter it based on the transcripts table
     bed = pd.read_csv(
-        os.path.join(args.path, Constants.FileNames.BED), sep="\t", header=None
+        os.path.join(path, Constants.FileNames.BED), sep="\t", header=None
     )
     bed = bed[bed[3].isin(table["transcripts"])]
     custom_table = table[table["transcripts"].isin(bed[3])]
 
     # Write the filtered .bed file
-    f = os.path.join(args.path, Constants.FileNames.FILTERED_BED)
+    f = os.path.join(path, Constants.FileNames.FILTERED_BED)
     bed.to_csv(
         f,
         sep="\t",

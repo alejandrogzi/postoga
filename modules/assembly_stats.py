@@ -13,7 +13,6 @@ based on the Ancestral_placental.txt file.
 
 
 import pandas as pd
-import argparse
 from constants import Constants
 from logger import Log
 from modules.utils import bed_reader, ancestral_reader
@@ -22,7 +21,7 @@ from modules.utils import bed_reader, ancestral_reader
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.4.0-devel"
+__version__ = "0.5.0-devel"
 
 
 def get_classes(path: str, bed: str, table: pd.DataFrame) -> pd.DataFrame:
@@ -70,13 +69,9 @@ def qual_by_ancestral(
 
     stats = overlap["class"].value_counts().to_dict()
 
-    info = [
-        log.record(
-            f"number of ancestral genes/custom genes ({len(ancestral)}) in query: {len(overlap)}, {len(overlap)/len(ancestral)*100:.2f}% overlap"
-        ),
-        log.record(f"ancestral genes in query by class: {stats}"),
-    ]
-
-    [log.record(x) for x in info]
+    log.record(
+        f"number of ancestral genes/custom genes ({len(ancestral)}) in query: {len(overlap)}, {len(overlap)/len(ancestral)*100:.2f}% overlap"
+    )
+    log.record(f"ancestral genes in query by class: {stats}")
 
     return

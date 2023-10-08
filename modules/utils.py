@@ -5,13 +5,11 @@
 
 import subprocess
 import pandas as pd
-import os
-from constants import Constants
 
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.4.0-devel"
+__version__ = "0.5.0-devel"
 
 
 def shell(cmd: str) -> str:

@@ -3,8 +3,7 @@
 
 """ A module to convert .bed files to .gtf and .gff files. """
 
-import os
-import argparse
+
 from constants import Constants
 from logger import Log
 from modules.utils import shell
@@ -13,7 +12,7 @@ from modules.utils import shell
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.4.0-devel"
+__version__ = "0.5.0-devel"
 
 
 def bed_to_gtf(path: str, bed: str, isoforms: str) -> str:
@@ -28,7 +27,7 @@ def bed_to_gtf(path: str, bed: str, isoforms: str) -> str:
 
     log = Log.connect(path, Constants.FileNames.LOG)
 
-    gtf = f"{bed.split('.')[0]}.gtf"
+    gtf = f"{bed.split('.bed')[0]}.gtf"
     cmd = f"{Constants.ToolNames.BED2GTF} {bed} {isoforms} {gtf}"
     sh = shell(cmd)
 
@@ -55,7 +54,7 @@ def bed_to_gff(path: str, bed: str, isoforms: str) -> str:
 
     log = Log.connect(path, Constants.FileNames.LOG)
 
-    gff = f"{bed.split('.')[0]}.gff"
+    gff = f"{bed.split('.bed')[0]}.gff"
     cmd = f"{Constants.ToolNames.BED2GFF} {bed} {isoforms} {gff}"
     sh = shell(cmd)
 
