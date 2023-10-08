@@ -37,7 +37,6 @@ to better manage the logging of the tool.
 
 import os
 import datetime
-from version import __version__
 from constants import Constants
 from modules.utils import shell
 import logging
@@ -46,7 +45,7 @@ import logging
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.4.0-devel"
+__version__ = "0.5.0-devel"
 
 
 class Log:
