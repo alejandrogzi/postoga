@@ -1,0 +1,6 @@
+[submodule "bed2gtf"]
+	path = bed2gtf
+	url = https://github.com/alejandrogzi/bed2gtf
+[submodule "bed2gff"]
+	path = bed2gff
+	url = https://github.com/alejandrogzi/bed2gff
