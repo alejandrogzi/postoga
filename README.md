@@ -27,12 +27,12 @@ If you see something like this at then end, postoga is ready!:
 ####################################
 postoga: the post-TOGA processing pipeline
 version: 0.5.0-devel
-commit: 3db4905
+commit: 67ecb4e
 branch: master
 
 [XXXXXX] - INFO: postoga started!
-[XXXXXX] - INFO: running in mode base with arguments: {'mode': 'base', 'path': './supply/test/', 'by_class': None, 'by_rel': None, 'threshold': '0.5', 'to': 'gtf', 'assembly_qual': './supply/Ancestral_placental.txt'}
-[XXXXXX] - INFO: found 133057 projections, 91330 unique transcripts, 19882 unique genes
+[XXXXXX] - INFO: running in mode base with arguments: {'mode': 'base', 'path': './supply/test/', 'by_class': None, 'by_rel': None, 'threshold': '0.5', 'to': 'gff', 'assembly_qual': './supply/Ancestral_placental.txt'}
+[XXXXXX] - INFO: found 10 projections, 10 unique transcripts, 10 unique genes
 ```
 
 Here is a descrption of postoga features:
