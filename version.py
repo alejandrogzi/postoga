@@ -7,6 +7,8 @@ import os
 
 
 __author__ = "Alejandro Gonzales-Irribarren"
+__email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
+__github__ = "https://github.com/alejandrogzi"
 __credits__ = ["Bogdan M. Kirilenko"]
 
 
@@ -52,7 +54,7 @@ class Version:
     def update_scripts(self):
         scripts = self.get_py_scripts()
         for script in scripts:
-            if self.check_uncomitted(script):
+            if self.check_uncomitted(script) or script == "logger.py":
                 with open(script, "r") as f:
                     lines = f.readlines()
                 with open(script, "w") as f:
@@ -68,7 +70,7 @@ class Version:
         return self.version_repr
 
 
-__version__ = Version(0, 4, 0, dev=True)
+__version__ = Version(0, 5, 0, dev=True)
 
 if __name__ == "__main__":
     print(f"postoga v.{__version__}")
