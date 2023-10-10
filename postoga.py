@@ -19,15 +19,16 @@ from logger import Log
 from modules.convert_from_bed import bed_to_gtf, bed_to_gff
 from modules.make_query_table import query_table
 from modules.write_isoforms import isoform_writer
-from modules.filter_query_annotation import filter_bed
+from modules.filter_query_annotation import filter_bed, get_stats_from_bed
 from modules.assembly_stats import qual_by_ancestral
 from modules.haplotype_branch import merge_haplotypes
+from modules.plotter import postoga_plotter
 
 
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.5.0-devel"
+__version__ = "0.6.0-devel"
 
 
 class TogaDir:
@@ -54,6 +55,7 @@ class TogaDir:
             self.by_class = args.by_class if args.by_class else None
             self.by_rel = args.by_rel if args.by_rel else None
             self.threshold = args.threshold if args.threshold else None
+            self.species = args.species
         else:
             """The haplotype branch of postoga"""
             self.paths = args.haplotype_path.split(",")
@@ -81,11 +83,16 @@ class TogaDir:
             self.isoforms = isoform_writer(self.path, self.table)
 
             if any([self.by_class, self.by_rel, self.threshold]):
-                self.bed = filter_bed(
+                self.bed, self.stats, self.ngenes = filter_bed(
                     self.path, self.table, self.by_class, self.by_rel, self.threshold
+                )
+                self.base_stats, _ = get_stats_from_bed(
+                    os.path.join(self.path, Constants.FileNames.BED), self.table
                 )
             else:
                 self.bed = os.path.join(self.path, Constants.FileNames.BED)
+                self.base_stats, self.ngenes = get_stats_from_bed(self.bed, self.table)
+                self.stats = None
 
             if self.to == "gtf":
                 self.gtf = bed_to_gtf(self.path, self.bed, self.isoforms)
@@ -93,7 +100,18 @@ class TogaDir:
                 self.gff = bed_to_gff(self.path, self.bed, self.isoforms)
 
             ##### STEP 2 #####
-            _ = qual_by_ancestral(self.path, self.bed, self.table, self.q_assembly)
+            self.ancestral_stats = qual_by_ancestral(
+                self.path, self.bed, self.table, self.q_assembly
+            )
+
+            postoga_plotter(
+                self.path,
+                self.ancestral_stats,
+                self.base_stats,
+                self.ngenes,
+                self.species,
+                self.stats,
+            )
 
             self.log.close()
 
@@ -143,6 +161,15 @@ def base_branch(subparsers):
         required=False,
         type=str,
         default=Constants.FileNames.ANCESTRAL,
+    )
+    base_parser.add_argument(
+        "-sp",
+        "--species",
+        help="Species name to be used as a reference for the assembly quality calculation (default: human)",
+        required=False,
+        choices=["human", "mouse", "chicken"],
+        type=str,
+        default=Constants.SPECIES_DEFAULT,
     )
 
 
