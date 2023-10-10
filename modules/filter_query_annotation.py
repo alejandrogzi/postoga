@@ -8,12 +8,13 @@ import pandas as pd
 import os
 from constants import Constants
 from logger import Log
+from modules.utils import bed_reader
 
 
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.5.0-devel"
+__version__ = "0.6.0-devel"
 
 
 def filter_bed(
@@ -23,14 +24,15 @@ def filter_bed(
     Filters the original .bed file to produce a custom filtered file
 
     @type path: str
-    @param path: path to the directory where the files will be written
-    @type log: Log
-    @param log: logger object to record messages
+    @param path: path to the results directory
     @type table: pd.DataFrame
-    @param table: a pandas DataFrame
-    @param threshold: Threshold for filtering
-    @param by_class: Filter by class
-    @param by_rel: Filter by relation
+    @param table: query table
+    @type by_class: list
+    @param by_class: list of classes to filter
+    @type by_rel: list
+    @param by_rel: list of relationships to filter
+    @type threshold: str
+    @param threshold: orthology score threshold
     """
 
     log = Log.connect(path, Constants.FileNames.LOG)
@@ -83,4 +85,23 @@ def filter_bed(
 
     [log.record(i) for i in info]
 
-    return f
+    stats = [
+        custom_table["class"].value_counts().to_dict(),
+        custom_table["relation"].value_counts().to_dict(),
+        custom_table["confidence_level"].value_counts().to_dict(),
+    ]
+
+    return f, stats, len(custom_table["t_gene"].unique())
+
+
+def get_stats_from_bed(bed: str, table: pd.DataFrame):
+    """Get the stats of a given bed file"""
+    bed = bed_reader(bed)
+    bed_table = table[table["transcripts"].isin(bed[3])]
+    stats = [
+        bed_table["class"].value_counts().to_dict(),
+        bed_table["relation"].value_counts().to_dict(),
+        bed_table["confidence_level"].value_counts().to_dict(),
+    ]
+
+    return stats, len(bed_table["t_gene"].unique())
