@@ -13,17 +13,17 @@ from logger import Log
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.5.0-devel"
+__version__ = "0.6.0-devel"
 
 
 def isoform_writer(path: str, table: pd.DataFrame) -> str:
     """
     Writes all isoforms to a text file
 
-    @type args: subprocess.Namespace
-    @param args: defined arguments
+    @type path: str
+    @param path: path to the results directory
     @type table: pd.DataFrame
-    @param table: a pandas DataFrame
+    @param table: query table
     """
 
     log = Log.connect(path, Constants.FileNames.LOG)
