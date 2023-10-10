@@ -19,4 +19,15 @@
 - removed unnecessary imports in all modules
 - `TOGA_assemblyStats.py -m merge` is now fully functional in postoga under `postoga haplotypes -hpath path1,path2,path3 --source [query, loss] --rule I>PI>UL>L>M>PM>PG>abs`.
 - logger.py is automatically updated with the current version
-- postoga now automates installing requirements (python/rust)
+- postoga now automates installing requirements (python/rust) through `./configure sh`
+- implemented `test.sh` to make an initial test with random data in `./supply/test`
+
+
+## postoga v.0.6.0-devel
+
+- Fixed unnecessary imports and comments in all modules.
+- Added `plotter.py`, the plotter module of postoga.
+- postoga now reports findings automatically and save them under `POSTOGA_REPORT.pdf`
+- Modules have been updated to synchronize with plotter module.
+- Added plotter-dependent project-wide constants
+- Implemented `get_stats_from_bed` under `filter_query_annotation`, to quickly extract query stats 
