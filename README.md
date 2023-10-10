@@ -5,7 +5,7 @@ The post-TOGA processing pipeline.
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 ![version](https://img.shields.io/badge/version-0.6.0--devel-orange)
 
-![Logo](https://github.com/alejandrogzi/postoga/blob/master/supply/postoga_logo_git.png =350x)
+<img src="./supply/postoga_logo_git.png" width=500/>
 ![Report](https://github.com/alejandrogzi/postoga/blob/master/supply/postoga_report.png)
 
 ## Usage
