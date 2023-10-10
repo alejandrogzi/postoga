@@ -25,7 +25,7 @@ __version__ = "0.6.0-devel"
 
 
 def set_font():
-    font_dir = "/home/alejandro/Downloads/Arial.ttf"
+    font_dir = "./supply/font/Arial.ttf"
     font_manager.fontManager.addfont(font_dir)
     plt.rcParams["font.family"] = "Arial"
 
@@ -336,9 +336,7 @@ def make_ancestral_barplot(ancestral: dict, ax):
     ax.set_title("Ancestral classes in annotation", fontsize=11, ha="center")
 
 
-def postoga_plotter(
-    path: str, ancestral: dict, db: list, ngenes, species="human", db1=None
-):
+def postoga_plotter(path: str, ancestral: dict, db: list, ngenes, species="human", db1=None):
     """The master plotter of postoga"""
 
     log = Log.connect(path, Constants.FileNames.LOG)
@@ -355,13 +353,7 @@ def postoga_plotter(
     commit = shell(Constants.Commands.COMMIT)
     branch = shell(Constants.Commands.BRANCH)
 
-    fig.text(
-        0.67,
-        0.82,
-        Constants.PLOTSTAMP.format(timestamp, __version__, branch, commit),
-        fontsize=8,
-        ha="center",
-    )
+    fig.text(0.67, 0.82, Constants.PLOTSTAMP.format(timestamp, __version__, branch, commit), fontsize=8, ha="center")
 
     fig.text(0.1, 0.79, "A", fontsize=15, ha="center")
     fig.text(0.1, 0.525, "C", fontsize=15, ha="center")
