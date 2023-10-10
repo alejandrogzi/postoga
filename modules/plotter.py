@@ -269,7 +269,7 @@ def get_reduced_ancestral_dict(ancestral: dict):
 
 def make_scatter_for_mammals(ancestral: dict, ax):
     df = pd.read_csv(
-        "/home/alejandro/Documents/projects/postoga/supply/mammal_genes_template.txt",
+        Constants.FileNames.MAMMALS,
         sep="\t",
         thousands=",",
     )
