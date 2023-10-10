@@ -12,17 +12,15 @@ from logger import Log
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.5.0-devel"
+__version__ = "0.6.0-devel"
 
 
 def query_table(path: str) -> pd.DataFrame:
     """
     Return a pandas DataFrame with all projections and metadata.
 
-    @type args: subprocess.Namespace
-    @param args: defined arguments
-    @rtype: DataFrame
-    @return a DataFrame with all the projections and metada
+    @type path: str
+    @param path: path to the results directory
     """
 
     log = Log.connect(path, Constants.FileNames.LOG)

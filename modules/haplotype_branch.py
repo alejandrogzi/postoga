@@ -15,13 +15,15 @@ from logger import Log
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.4.0-devel"
+__version__ = "0.6.0-devel"
 
 
 def get_haplotype_classes(paths: list, source: str) -> None:
     """
     @type paths: str
     @param paths: comma separated paths to TOGA results directories
+    @type source: str
+    @param source: the source of the haplotype classes
 
     cmd: postoga haplotypes -hpath path1,path2,path3 --source [query, loss]
     """

@@ -12,13 +12,15 @@ from modules.utils import shell
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.5.0-devel"
+__version__ = "0.6.0-devel"
 
 
 def bed_to_gtf(path: str, bed: str, isoforms: str) -> str:
     """
     Converts a .bed file to .gtf
 
+    @type path: str
+    @param path: path to the results directory
     @type bed: str
     @param bed: path to .bed file
     @type isoforms: str
@@ -46,6 +48,8 @@ def bed_to_gff(path: str, bed: str, isoforms: str) -> str:
     """
     Converts a .bed file to .gff
 
+    @type path: str
+    @param path: path to the results directory
     @type bed: str
     @param bed: path to .bed file
     @type isoforms: str

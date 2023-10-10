@@ -21,19 +21,17 @@ from modules.utils import bed_reader, ancestral_reader
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.5.0-devel"
+__version__ = "0.6.0-devel"
 
 
 def get_classes(path: str, bed: str, table: pd.DataFrame) -> pd.DataFrame:
     """
-    @type args: argsparse.Namespace
-    @param args: defined arguments
+    @type path: str
+    @param path: path to the results directory
     @type bed: str
     @param bed: path to original/filtered bed file
     @type table: pd.DataFrame
     @param table: a pandas DataFrame
-    @rtype: pd.DataFrame
-    @return genes: a pandas DataFrame with unique genes in the query annotation
     """
     log = Log.connect(path, Constants.FileNames.LOG)
 
@@ -54,12 +52,14 @@ def qual_by_ancestral(
     path: str, bed: str, table: pd.DataFrame, assembly_qual: str
 ) -> None:
     """
-    @type args: argsparse.Namespace
-    @param args: defined arguments
+    @type path: str
+    @param path: path to the results directory
     @type bed: str
     @param bed: path to original/filtered bed file
     @type table: pd.DataFrame
     @param table: a pandas DataFrame
+    @type assembly_qual: str
+    @param assembly_qual: path to the ancestral placental file
     """
     log = Log.connect(path, Constants.FileNames.LOG)
 
@@ -74,4 +74,4 @@ def qual_by_ancestral(
     )
     log.record(f"ancestral genes in query by class: {stats}")
 
-    return
+    return stats
