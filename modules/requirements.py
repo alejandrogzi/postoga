@@ -12,7 +12,7 @@ __github__ = "https://github.com/alejandrogzi"
 __version__ = "0.4.0-devel"
 
 
-packages = ["pandas==2.0.2", "numpy==1.24.3"]
+packages = ["pandas==2.0.2", "numpy==1.24.3", "matplotlib==3.8.0"]
 
 for package in packages:
     try:
