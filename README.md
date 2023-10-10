@@ -1,9 +1,12 @@
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-![version](https://img.shields.io/badge/version-0.5.0--devel-orange)
-
 # postoga
 
 The post-TOGA processing pipeline.
+
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+![version](https://img.shields.io/badge/version-0.6.0--devel-orange)
+
+![Logo](https://github.com/alejandrogzi/postoga/blob/master/supply/postoga_logo_git.png =350x)
+![Report](https://github.com/alejandrogzi/postoga/blob/master/supply/postoga_report.png)
 
 ## Usage
 
@@ -44,10 +47,8 @@ positional arguments:
   {base,haplotype}  Select mode
     base            Base mode
     haplotype       Haplotype mode
-```
 
-```text
-usage: postoga.py base [-h] -p PATH [-bc BY_CLASS] [-br BY_REL] [-th THRESHOLD] -to {gtf,gff} [-aq ASSEMBLY_QUAL]
+postoga.py base [-h] -p PATH [-bc BY_CLASS] [-br BY_REL] [-th THRESHOLD] -to {gtf,gff} [-aq ASSEMBLY_QUAL] [-sp {human,mouse,chicken}]
 
 optional arguments:
   -h, --help            Display help message
@@ -62,10 +63,10 @@ optional arguments:
                         Specify the conversion format for .bed (query_annotation/filtered) file (gtf, gff3)
   -aq ASSEMBLY_QUAL, --assembly_qual ASSEMBLY_QUAL
                         Calculate assembly quality based on a list of genes provided by the user (default: Ancestral_placental.txt)
-```
+  -sp {human,mouse,chicken}, --species {human,mouse,chicken}
+                        Species name to be used as a reference for the assembly quality calculation (default: human)
 
-```text
-usage: postoga.py haplotype [-h] -hp HAPLOTYPE_PATH [-r RULE] [-s {query,loss}]
+postoga.py haplotype [-h] -hp HAPLOTYPE_PATH [-r RULE] [-s {query,loss}]
 
 optional arguments:
   -h, --help            Display help message
@@ -77,17 +78,16 @@ optional arguments:
 ```
 
 
-## What's new on version 0.5.0-devel
+## What's new on version 0.6.0-devel
 
 
-- postoga fully works now on two modes `postoga base` & `postoga haplotype`
-- base/haplo branches initiate own logs (haplo branch chooses the first path of the list provided)
-- fixed filter_bed() module -> handles different filter combinations (`--by_class`, `--by_rel`, `--threshold`)
-- removed unnecessary imports in all modules
-- `TOGA_assemblyStats.py -m merge` is now fully functional in postoga under `postoga haplotypes -hpath path1,path2,path3 --source [query, loss] --rule I>PI>UL>L>M>PM>PG>abs`.
-- logger.py is automatically updated with the current version
-- postoga now automates installing requirements (python/rust) through `./configure sh`
-- implemented `test.sh` to make an initial test with random data in `./supply/test`
+
+- Fixed unnecessary imports and comments in all modules.
+- Added `plotter.py`, the plotter module of postoga.
+- postoga now reports findings automatically and save them under `POSTOGA_REPORT.pdf`
+- Modules have been updated to synchronize with plotter module.
+- Added plotter-dependent project-wide constants
+- Implemented `get_stats_from_bed` under `filter_query_annotation`, to quickly extract query stats 
 
 
 
@@ -97,7 +97,7 @@ optional arguments:
 
 - [x] postoga STEP 1: automate conversion from bed to gtf/gff -> bed2gtf will implement a sorting leaving dependecy on gtfsort (something already implemented in bed2gff
 
-- [ ] test model with different naming nomenclatures (most recent TOGA versions)
+- [x] test model with different naming nomenclatures (most recent TOGA versions)
 
 - [ ] Handle possible warnings of data (low number of intact genes, etc) within log file (?)
 
@@ -105,7 +105,7 @@ optional arguments:
 
 - [x] postoga STEP 2: assembly stats re-implementation -> https://github.com/hillerlab/TOGA/blob/master/supply/TOGA_assemblyStats.py
 
-- [ ] Build Graph class automating plotting reports -> need to define canvas structure and plot types to a default report (relevant variables)
+- [x] Build Graph class automating plotting reports -> need to define canvas structure and plot types to a default report (relevant variables)
 
 - [ ] postoga STEP 3: alignment stats -> rust binding + ortholog lengths (?)
 
