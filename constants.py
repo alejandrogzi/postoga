@@ -17,7 +17,7 @@ import os
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.5.0-devel"
+__version__ = "0.6.0-devel"
 __credits__ = ["Bogdan Kirilenko"]
 
 
@@ -45,6 +45,79 @@ class Constants:
         "N": 8,
         "NF": 9,
     }
+    TAXA_ORDER = [
+        "Hominoidea",
+        "Scandentia",
+        "Dermoptera",
+        "Rodentia",
+        "Lagomorpha",
+        "Tylopoda",
+        "Whippomorpha",
+        "Ruminantia",
+        "Suina",
+        "Perissodactyla",
+        "Carnivora",
+        "Pholidota",
+        "Chiroptera",
+        "Eulipotyphla",
+        "Afrotheria",
+        "Xenarthra",
+        "Marsupialia",
+        "Monotremata",
+        "Galloanserae",
+        "Columbiformes",
+        "Cuculimorphae",
+        "Caprimulgimorphae",
+        "Gruiformes",
+        "Charadriiformes",
+        "Aesquomithes",
+        "Strigiformes",
+        "Piciformes",
+        "Coraciiformes",
+        "Accipitriformes",
+        "Falconiformes",
+        "Psittaciformes",
+        "Passeriformes",
+        "Palaeognathae",
+    ]
+    CATEGORY_COLORS = {
+        "I": "#0073ae",
+        "UL": "#6ab1e0",
+        "L": "#89171a",
+        "PM": "#cf5058",
+        "M": "#ec212a",
+        "PI": "#009bd9",
+        "PG": "black",
+        "o2o": "#0073ae",
+        "m2m": "#009bd9",
+        "m2o": "#6ab1e0",
+        "o2m": "#cf5058",
+        "high_confidence": "#0073ae",
+        "partial": "#6ab1e0",
+        "average_confidence": "#009bd9",
+        "low_confidence": "#cf5058",
+    }
+    STACKED_COLUMN_NAMES = {
+        "Count_0": "Orthology\nclass",
+        "Count_1": "Orthology\nrelationship",
+        "Count_2": "Orthology\nconfidence",
+    }
+    ANCESTRAL_CATEGORY = {"mut": ["UL", "L"], "missing": ["PI", "M", "PM", "PG", "NF"]}
+    ANCESTRAL_NGENES = 18430
+    SUPERORDER = ["Laurasiatheria", "Euarchontoglires", "User"]
+    SUPERORDER_COLORS = {
+        "Laurasiatheria": "black",
+        "Euarchontoglires": "blue",
+        "Other": "grey",
+        "User": "red",
+    }
+    SPECIES_DEFAULT = "human"
+    PLOTSTAMP = """Generated on {} by postoga \nversion: {}, branch: {}, commit: {}.\n
+    This report provides a basic analysis of the data and results 
+    obtained by TOGA and is intended to be used as a preliminary 
+    analisys step. For more information, updates, bugs, suggestions 
+    or any other inquire, please visit our GitHub repository at
+    github.com/alejandrogzi/postoga."""
 
     class ToolNames:
         BED2GTF = "bed2gtf"
@@ -70,6 +143,9 @@ class Constants:
         QUALITY = os.path.join("temp", "transcript_quality.tsv")
         ANCESTRAL = os.path.join("./supply", "Ancestral_placental.txt")
         HAPLOTYPE = "merged_assemblies.txt"
+        MAMMALS = os.path.join("./supply", "mammal_genes_template.txt")
+        BIRDS = os.path.join("./supply", "birds_genes_template.txt")
+        PDF = "POSTOGA_REPORT.pdf"
 
     class Commands:
         COMMIT = "git rev-parse --short HEAD"
