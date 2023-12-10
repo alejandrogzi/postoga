@@ -250,7 +250,7 @@ def get_reduced_ancestral_dict(ancestral: dict):
         ancestral.get(category, 0)
         for category in Constants.ANCESTRAL_CATEGORY["missing"]
     )
-
+    print(ancestral)
     # Calculate the ancestral_dict
     ancestral_dict = {
         key: value
@@ -284,8 +284,18 @@ def make_scatter_for_mammals(ancestral: dict, ax):
     df = df[["Species", "taxonomy", "Intact", "mut", "missing"]]
 
     ancestral_dict = get_reduced_ancestral_dict(ancestral)
+    # FAST FIX:
+    # if no genes were classified as "Intact", then number of keys in ancestral_dict will be two instead of three.
+    # As result, adding row to the dataframe will fail.
+    # Such story seems to happen in 100% of cases, if non ensembl gene ids are used.
+    # I tried to trace upstream, but stopped at qual_by_ancestral function from assembly_stats.py.
+    # Issue is a bit upstream of it
 
-    df.loc[len(df.index), :] = ["User", "User"] + list(ancestral_dict.values())
+    ancestral_values = list(ancestral_dict.values())
+    if len(ancestral_values) == 2:
+        ancestral_values = [0] + ancestral_values
+    df.loc[len(df.index), :] = ["User", "User"] + ancestral_values
+    # df.loc[len(df.index), :] = ["User", "User"] + list(ancestral_dict.values())
     df.iloc[:, 2:] = df.iloc[:, 2:] / 18430
 
     for i, row in df.iterrows():
