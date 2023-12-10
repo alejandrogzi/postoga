@@ -30,7 +30,7 @@ def bed_to_gtf(path: str, bed: str, isoforms: str) -> str:
     log = Log.connect(path, Constants.FileNames.LOG)
 
     gtf = f"{bed.split('.bed')[0]}.gtf"
-    cmd = f"{Constants.ToolNames.BED2GTF} {bed} {isoforms} {gtf}"
+    cmd = f"{Constants.ToolNames.BED2GTF} --bed {bed} --isoforms {isoforms} --output {gtf}"
     sh = shell(cmd)
 
     info = [
