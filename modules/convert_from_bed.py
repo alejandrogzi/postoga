@@ -59,13 +59,15 @@ def bed_to_gff(path: str, bed: str, isoforms: str) -> str:
     log = Log.connect(path, Constants.FileNames.LOG)
 
     gff = f"{bed.split('.bed')[0]}.gff"
-    cmd = f"{Constants.ToolNames.BED2GFF} {bed} {isoforms} {gff}"
+    cmd = f"{Constants.ToolNames.BED2GFF} --bed {bed} --isoforms {isoforms} --output {gff}"
     sh = shell(cmd)
 
     info = [
         f"using {Constants.ToolNames.BED2GFF} from {Constants.Metadata.BED2GFF_METADATA} to convert bed to gff",
+        f"running {cmd}",
         sh,
         f"gff file written to {gff}",
+
     ]
 
     [log.record(i) for i in info]
