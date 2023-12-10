@@ -15,7 +15,7 @@ To use postoga, just do:
 
 ```bash
 # clone the repository
-git clone https://github.com/alejandrogzi/postoga.git
+git clone --recursive https://github.com/alejandrogzi/postoga.git
 cd postoga
 
 # call configure.sh to install dependencies
