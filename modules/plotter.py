@@ -25,7 +25,7 @@ __version__ = "0.6.0-devel"
 
 
 def set_font():
-    font_dir = "./supply/font/Arial.ttf"
+    font_dir = Constants.FileNames.FONT #"./supply/font/Arial.ttf"
     font_manager.fontManager.addfont(font_dir)
     plt.rcParams["font.family"] = "Arial"
 
@@ -361,7 +361,7 @@ def postoga_plotter(path: str, ancestral: dict, db: list, ngenes, species="human
     fig.text(0.52, 0.28, "E", fontsize=15, ha="center")
 
     # display logo
-    logo_img = plt.imread("./supply/postoga_logo.png")
+    logo_img = plt.imread(Constants.FileNames.LOGO_IMG) # "./supply/postoga_logo.png")
     logo = OffsetImage(logo_img, zoom=0.2)
     ax_logo = fig.add_subplot(gs[0, 0])
     ax_logo.add_artist(AnnotationBbox(logo, (0.25, 0.75), frameon=False))

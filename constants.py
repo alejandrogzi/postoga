@@ -12,7 +12,13 @@ TOGA results for downstream analysis.
 
 
 import os
+import supply
 
+try:
+    import importlib.resources as resources
+except ImportError:
+    # Try backported to PY<37 `importlib_resources`.
+    import importlib_resources as resources
 
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
@@ -125,6 +131,7 @@ class Constants:
         COMPLEASM = "compleasm"
 
     class FileNames:
+        SUPPLY_FOLDER = resources.files(supply)
         ORTHOLOGY = "orthology_classification.tsv"
         BED = "query_annotation.bed"
         CODON = "codon.fasta"
@@ -141,10 +148,12 @@ class Constants:
         SCORES = os.path.join("temp", "orthology_scores.tsv")
         LOG = "postoga.log"
         QUALITY = os.path.join("temp", "transcript_quality.tsv")
-        ANCESTRAL = os.path.join("./supply", "Ancestral_placental.txt")
+        ANCESTRAL = SUPPLY_FOLDER.joinpath("Ancestral_placental.txt") # os.path.join("./supply", "Ancestral_placental.txt")
         HAPLOTYPE = "merged_assemblies.txt"
-        MAMMALS = os.path.join("./supply", "mammal_genes_template.txt")
-        BIRDS = os.path.join("./supply", "birds_genes_template.txt")
+        MAMMALS = SUPPLY_FOLDER.joinpath("mammal_genes_template.txt") # os.path.join("./supply", "mammal_genes_template.txt")
+        BIRDS = SUPPLY_FOLDER.joinpath("birds_genes_template.txt") #os.path.join("./supply", "birds_genes_template.txt")
+        LOGO_IMG = SUPPLY_FOLDER.joinpath("postoga_logo.png")
+        FONT = SUPPLY_FOLDER.joinpath("font/Arial.ttf")
         PDF = "POSTOGA_REPORT.pdf"
 
     class Commands:
