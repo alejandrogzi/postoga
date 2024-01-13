@@ -9,7 +9,7 @@ import pandas as pd
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.5.0-devel"
+__version__ = "0.7.0-devel"
 
 
 def shell(cmd: str) -> str:
@@ -33,11 +33,13 @@ def bed_reader(bed: str) -> pd.DataFrame:
     return pd.read_csv(bed, sep="\t", header=None)
 
 
-def ancestral_reader(ancestral: str) -> list:
+def ancestral_reader(ancestral: str, source: str) -> list:
     """
     Reads an ancestral file and returns a pandas DataFrame
 
     @type ancestral: str
     @param ancestral: path to ancestral file
     """
-    return pd.read_csv(ancestral, sep="\t", header=None).iloc[:, 0].to_list()
+    df = pd.read_csv(ancestral, sep="\t").loc[:, source].to_list()
+
+    return df
