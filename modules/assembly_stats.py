@@ -21,7 +21,7 @@ from modules.utils import bed_reader, ancestral_reader
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.6.0-devel"
+__version__ = "0.7.0-devel"
 
 
 def get_classes(path: str, bed: str, table: pd.DataFrame) -> pd.DataFrame:
@@ -49,7 +49,7 @@ def get_classes(path: str, bed: str, table: pd.DataFrame) -> pd.DataFrame:
 
 
 def qual_by_ancestral(
-    path: str, bed: str, table: pd.DataFrame, assembly_qual: str
+    path: str, bed: str, table: pd.DataFrame, assembly_qual: str, source: str
 ) -> None:
     """
     @type path: str
@@ -64,7 +64,7 @@ def qual_by_ancestral(
     log = Log.connect(path, Constants.FileNames.LOG)
 
     genes = get_classes(path, bed, table)
-    ancestral = ancestral_reader(assembly_qual)
+    ancestral = ancestral_reader(assembly_qual, source)
     overlap = genes[genes["t_gene"].isin(ancestral)]
 
     stats = overlap["class"].value_counts().to_dict()
