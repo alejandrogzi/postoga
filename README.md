@@ -3,34 +3,12 @@
 The post-TOGA processing pipeline.
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-![version](https://img.shields.io/badge/version-0.6.0--devel-orange)
+![version](https://img.shields.io/badge/version-0.7.0--devel-orange)
 
 <img src="./supply/postoga_logo_git.png" width=500 align="center" />
 
-<img src="./supply/postoga_report.png" align="center"/>
+<!-- <img src="./supply/postoga_report.png" align="center"/> -->
 
-## Preprocessing of TOGA output.
-posTOGA needs a **transcript_quality.tsv** file, which is not created by TOGA pipeline.
-Also posTOGA expects file **orthology_scores.tsv** to be located in temp subfolder of TOGA output, but usually it is located just in TOGA output dir.
-To generate it, just run 
-```bash
-TOGA_DIR="toga_dir/"
-TOGA_OUTPUT_DIR="output_dir/"
-${TOGA_DIR}/modules/get_transcripts_quality.py ${TOGA_OUTPUT_DIR}/temp/exons_meta_data.tsv  ${TOGA_OUTPUT_DIR}/orthology_scores.tsv  ${TOGA_OUTPUT_DIR}/temp/transcript_quality.tsv
-```
-Also posTOGA expects file **orthology_scores.tsv** to be located in temp subfolder of TOGA output, but usually it is located just in TOGA output dir.
-
-## postTOGA input
-postTOGA expects 6 files as input in TOGA output directory. Three of them must be located directly in TOGA output dir, and three in the **temp/** subdirectory:
-
-**toga_output_dir/**
-    loss_summ_data.tsv
-    orthology_classification.tsv
-    query_annotation.bed
-    **temp/**
-        isoforms.tsv  
-        orthology_scores.tsv  
-        transcript_quality.tsv
 
 ## Usage
 
@@ -89,6 +67,8 @@ optional arguments:
                         Calculate assembly quality based on a list of genes provided by the user (default: Ancestral_placental.txt)
   -sp {human,mouse,chicken}, --species {human,mouse,chicken}
                         Species name to be used as a reference for the assembly quality calculation (default: human)
+  -src {ensembl,gene_name,entrez}, --source {ensembl,gene_name,entrez}
+                        DB source to overlap ancestral genes (default: ensembl)
 
 postoga.py haplotype [-h] -hp HAPLOTYPE_PATH [-r RULE] [-s {query,loss}]
 
@@ -102,18 +82,10 @@ optional arguments:
 ```
 
 
-## What's new on version 0.6.0-devel
+## What's new on version 0.7.0-devel
 
 
-
-- Fixed unnecessary imports and comments in all modules.
-- Added `plotter.py`, the plotter module of postoga.
-- postoga now reports findings automatically and save them under `POSTOGA_REPORT.pdf`
-- Modules have been updated to synchronize with plotter module.
-- Added plotter-dependent project-wide constants
-- Implemented `get_stats_from_bed` under `filter_query_annotation`, to quickly extract query stats 
-
-
+- to be filled
 
 ## TO DO's
 
