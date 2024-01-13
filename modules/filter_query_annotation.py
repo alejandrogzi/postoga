@@ -14,7 +14,7 @@ from modules.utils import bed_reader
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.6.0-devel"
+__version__ = "0.7.0-devel"
 
 
 def filter_bed(
@@ -79,7 +79,7 @@ def filter_bed(
         f"{len(bed)} projections are coming from {len(custom_table['helper'].unique())} unique transcripts and {len(custom_table['t_gene'].unique())} genes",
         f"class stats of new bed: {custom_table['class'].value_counts().to_dict()}",
         f"relation stats of new bed: {custom_table['relation'].value_counts().to_dict()}",
-        f"confidence stats of new bed: {custom_table['confidence_level'].value_counts().to_dict()}",
+        # f"confidence stats of new bed: {custom_table['confidence_level'].value_counts().to_dict()}",
         f"filtered bed file written to {f}",
     ]
 
@@ -88,7 +88,7 @@ def filter_bed(
     stats = [
         custom_table["class"].value_counts().to_dict(),
         custom_table["relation"].value_counts().to_dict(),
-        custom_table["confidence_level"].value_counts().to_dict(),
+        # custom_table["confidence_level"].value_counts().to_dict(),
     ]
 
     return f, stats, len(custom_table["t_gene"].unique())
@@ -101,7 +101,7 @@ def get_stats_from_bed(bed: str, table: pd.DataFrame):
     stats = [
         bed_table["class"].value_counts().to_dict(),
         bed_table["relation"].value_counts().to_dict(),
-        bed_table["confidence_level"].value_counts().to_dict(),
+        # bed_table["confidence_level"].value_counts().to_dict(),
     ]
 
     return stats, len(bed_table["t_gene"].unique())
