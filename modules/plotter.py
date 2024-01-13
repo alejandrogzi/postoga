@@ -21,7 +21,7 @@ from modules.utils import shell
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.6.0-devel"
+__version__ = "0.7.0-devel"
 
 
 def set_font():
@@ -50,9 +50,11 @@ def bar_setup(ax):
 
 
 def make_boxplot_annotated_genes(
-    reference: str, ngenes: int, ax
-):  # reference must be "human", "mouse" or "chicken"; ngenes: number of genes annotated
+        path: str, reference: str, ngenes: int):  # reference must be "human", "mouse" or "chicken"; ngenes: number of genes annotated
+    
     set_font()
+    fig, ax = plt.subplots(figsize=(9,4))
+
     if reference != "chicken":
         df = pd.read_csv(
             Constants.FileNames.MAMMALS, sep="\t", thousands=","
@@ -170,78 +172,101 @@ def make_boxplot_annotated_genes(
         fontsize=11,
     )
 
+    plt.savefig(
+        os.path.join(path, Constants.DirNames.FIGURES, Constants.FigNames.ANNOTATION_BOXPLOT),
+        format="pdf",
+        bbox_inches="tight",
+        dpi=300,
+    )
 
-def make_query_barplot_stats(db, ax, leg):
-    dfs = []
-    count = 0
-    for x in db:
-        df = pd.DataFrame.from_dict(
-            x, orient="index", columns=[f"Count_{count}"]
-        ).transpose()
-        df = df.div(df.sum(axis=1), axis=0) * 100
-        df.fillna(0, inplace=True)
-        dfs.append(df)
-        count += 1
 
-    combined_df = pd.concat(dfs, axis=1)
-    combined_df.fillna(0, inplace=True)
-    df = combined_df
-    x = df.index
-    bottom = None
+def make_query_barplot_stats(path: str, dbs: list):
+    
+    fig, (ax1, ax2) = plt.subplots(1,2)
+    axs = [ax1, ax2]
 
-    for column in df.columns:
-        heights = df[column]
-        ax.bar(
-            x,
-            heights,
-            bottom=bottom,
-            label=column,
-            color=Constants.CATEGORY_COLORS[column],
-        )
+    for idx, db in enumerate(dbs):
+        db = [{key: x[key] for key in Constants.CATEGORY_ORDER if key in x} for x in db]
+        count = 0
+        dfs = []
+        for x in db:
+            df = pd.DataFrame.from_dict(
+                x, orient="index", columns=[f"Count_{count}"]
+            ).transpose()
+            df = df.div(df.sum(axis=1), axis=0) * 100
+            df.fillna(0, inplace=True)
+            dfs.append(df)
+            count += 1
 
-        if bottom is None:
-            bottom = heights
+        combined_df = pd.concat(dfs, axis=1)
+        combined_df.fillna(0, inplace=True)
+        df = combined_df
+        x = df.index
+        bottom = None
+
+        for column in df.columns:
+            heights = df[column]
+            axs[idx].bar(
+                x,
+                heights,
+                bottom=bottom,
+                label=column,
+                color=Constants.CATEGORY_COLORS[column],
+            )
+
+            if bottom is None:
+                bottom = heights
+            else:
+                bottom += heights
+
+        legend_labels = defaultdict(list)
+
+        for category, color in Constants.CATEGORY_COLORS.items():
+            if category in df.columns:
+                legend_labels[color].append(category)
+
+        custom_legend_labels = [
+            " / ".join(categories) for color, categories in legend_labels.items()
+        ]
+
+        axs[idx].set_ylabel("Proportion (%)")
+
+        if idx > 0:
+            axs[idx].set_title("Filtered annotation", ha="center", fontsize=11)
         else:
-            bottom += heights
-
-    legend_labels = defaultdict(list)
-
-    for category, color in Constants.CATEGORY_COLORS.items():
-        legend_labels[color].append(category)
-
-    custom_legend_labels = [
-        " / ".join(categories) for color, categories in legend_labels.items()
-    ]
-
-    if leg:
-        ax.legend(
+            axs[idx].set_title("Base annotation", ha="center", fontsize=11)
+ 
+            axs[idx].legend(
             custom_legend_labels,
-            bbox_to_anchor=(2.3, -0.2),
+            bbox_to_anchor=(1.85, -0.2),
             frameon=False,
             handlelength=1,
             handleheight=1,
             fontsize="small",
             ncol=4,
         )
-        ax.text(1, 105, "Base annotation", ha="center", fontsize=11)
-        ax.set_ylabel("Proportion (%)")
-    else:
-        ax.text(1, 105, "Filtered annotation", ha="center", fontsize=11)
 
-    bar_setup(ax)
+        bar_setup(axs[idx])
 
-    for i, col in enumerate(combined_df.transpose().columns):
-        ax.text(
-            i,
-            -10.5,
-            f"{Constants.STACKED_COLUMN_NAMES[col]}",
-            ha="center",
-            va="center",
-            fontsize=10,
-        )
+        for i, col in enumerate(combined_df.transpose().columns):
+            axs[idx].text(
+                i,
+                -10.5,
+                f"{Constants.STACKED_COLUMN_NAMES[col]}",
+                ha="center",
+                va="center",
+                fontsize=10,
+            )
 
 
-def get_reduced_ancestral_dict(ancestral: dict):
+    plt.savefig(
+        os.path.join(path, Constants.DirNames.FIGURES, Constants.FigNames.BARPLOT),
+        format="pdf",
+        bbox_inches="tight",
+        dpi=300,
+    )
+
+def get_reduced_ancestral_dict(ancestral: dict, src: str):
     # Calculate mut and missing
     mut = sum(
         ancestral.get(category, 0) for category in Constants.ANCESTRAL_CATEGORY["mut"]
@@ -250,7 +275,7 @@ def get_reduced_ancestral_dict(ancestral: dict):
         ancestral.get(category, 0)
         for category in Constants.ANCESTRAL_CATEGORY["missing"]
     )
-    print(ancestral)
+
     # Calculate the ancestral_dict
     ancestral_dict = {
         key: value
@@ -260,14 +285,17 @@ def get_reduced_ancestral_dict(ancestral: dict):
         + Constants.ANCESTRAL_CATEGORY["missing"]
     }
     ancestral_dict["mut"] = mut
-    ancestral_dict["missing"] = Constants.ANCESTRAL_NGENES - sum(
+    ancestral_dict["missing"] = Constants.ANCESTRAL_NGENES[src] - sum(
         ancestral_dict.values()
     )  # 18430 IS CONSTANT
 
     return ancestral_dict
 
 
-def make_scatter_for_mammals(ancestral: dict, ax):
+def make_scatter_for_mammals(path: str, ancestral: dict, source: str):
+    
+    fig, ax = plt.subplots()
+
     df = pd.read_csv(
         Constants.FileNames.MAMMALS,
         sep="\t",
@@ -283,20 +311,22 @@ def make_scatter_for_mammals(ancestral: dict, ax):
     ]
     df = df[["Species", "taxonomy", "Intact", "mut", "missing"]]
 
-    ancestral_dict = get_reduced_ancestral_dict(ancestral)
-    # FAST FIX:
-    # if no genes were classified as "Intact", then number of keys in ancestral_dict will be two instead of three.
-    # As result, adding row to the dataframe will fail.
-    # Such story seems to happen in 100% of cases, if non ensembl gene ids are used.
-    # I tried to trace upstream, but stopped at qual_by_ancestral function from assembly_stats.py.
-    # Issue is a bit upstream of it
+    ancestral_dict = get_reduced_ancestral_dict(ancestral, source)
 
-    ancestral_values = list(ancestral_dict.values())
-    if len(ancestral_values) == 2:
-        ancestral_values = [0] + ancestral_values
-    df.loc[len(df.index), :] = ["User", "User"] + ancestral_values
-    # df.loc[len(df.index), :] = ["User", "User"] + list(ancestral_dict.values())
-    df.iloc[:, 2:] = df.iloc[:, 2:] / 18430
+    # # FAST FIX:
+    # # if no genes were classified as "Intact", then number of keys in ancestral_dict will be two instead of three.
+    # # As result, adding row to the dataframe will fail.
+    # # Such story seems to happen in 100% of cases, if non ensembl gene ids are used.
+    # # I tried to trace upstream, but stopped at qual_by_ancestral function from assembly_stats.py.
+    # # Issue is a bit upstream of it
+    #
+    # ancestral_values = list(ancestral_dict.values())
+    # if len(ancestral_values) == 2:
+    #     ancestral_values = [0] + ancestral_values
+    # df.loc[len(df.index), :] = ["User", "User"] + ancestral_values
+    
+    df.loc[len(df.index), :] = ["User", "User"] + list(ancestral_dict.values())
+    df.iloc[:, 2:] = df.iloc[:, 2:] / Constants.ANCESTRAL_NGENES[source]
 
     for i, row in df.iterrows():
         if row.taxonomy != "User":
@@ -327,9 +357,20 @@ def make_scatter_for_mammals(ancestral: dict, ax):
     ax.set_xlabel("%ancestral genes with\nmissing sequence")
     ax.set_ylabel("%ancestral genes with\ninactivating mutations")
 
+    plt.savefig(
+        os.path.join(path, Constants.DirNames.FIGURES, Constants.FigNames.ANCESTRAL_SCATTER),
+        format="pdf",
+        bbox_inches="tight",
+        dpi=300,
+    )
 
-def make_ancestral_barplot(ancestral: dict, ax):
-    ancestral_dict = get_reduced_ancestral_dict(ancestral)
+
+
+def make_ancestral_barplot(path: str, ancestral: dict, source):
+    
+    fig, ax = plt.subplots(figsize=(7, 5))
+
+    ancestral_dict = get_reduced_ancestral_dict(ancestral, source)
     ancestral_dict = {k: v / 18430 * 100 for k, v in ancestral_dict.items()}
     for x, y in ancestral_dict.items():
         ax.bar(x, y)
@@ -345,59 +386,107 @@ def make_ancestral_barplot(ancestral: dict, ax):
     ax.set_ylabel("%ancestral classes in query")
     ax.set_title("Ancestral classes in annotation", fontsize=11, ha="center")
 
+    plt.savefig(
+        os.path.join(path, Constants.DirNames.FIGURES, Constants.FigNames.ANCESTRAL_BARPLOT),
+        format="pdf",
+        bbox_inches="tight",
+        dpi=300,
+    )
 
-def postoga_plotter(path: str, ancestral: dict, db: list, ngenes, species="human", db1=None):
+
+
+def make_lengths_histogram(path: str, lengths: pd.Series):
+
+    fig, ax = plt.subplots(figsize=(7, 5))
+    mean = np.mean(lengths)
+    sd = np.std(lengths)
+    median = np.median(lengths)
+
+    n, bins, patches = ax.hist(lengths, bins=Constants.HIST_NBINS, density=True, alpha=0.5)
+    n.sort()
+    ax.text(bins[-20], n[-5], f"Mean: {mean:.6}\nMedian:{median:.6}\nStd: {sd:.6}")
+    ax.set_xlabel("Gene lengths [bp]")
+    ax.set_ylabel("Normalized amplitude")
+    ax.set_title("Gene lengths distribution", fontsize=11, ha="center")
+
+    plt.savefig(
+        os.path.join(path, Constants.DirNames.FIGURES, Constants.FigNames.LENGTHS_PLOT),
+        format="pdf",
+        bbox_inches="tight",
+        dpi=300,
+    )
+
+
+def make_scores_histogram(path: str, table: pd.DataFrame):
+
+    fig, ax = plt.subplots(figsize=(7, 4))
+
+    scores = table[table["pred"] > 0]["pred"]
+    mean = np.mean(scores)
+    sd = np.std(scores)
+    median = np.median(scores)
+
+    n, bins, patches = ax.hist(scores, bins=50, density=False, alpha=0.5)
+    n.sort()
+    ax.text(bins[5], n[-1]/1.5, f"Mean: {mean:.6}\nMedian:{median:.6}\nStd: {sd:.6}")
+    ax.set_xlabel("Prediction scores")
+    ax.set_ylabel("Number of transcripts")
+    ax.set_title("Orthology score distribution", fontsize=12, ha="center")
+
+    plt.savefig(
+        os.path.join(path, Constants.DirNames.FIGURES, Constants.FigNames.SCORE_PLOT),
+        format="pdf",
+        bbox_inches="tight",
+        dpi=300,
+    )
+
+
+def postoga_plotter(path: str, table: pd.DataFrame, ancestral: dict, db: list, ngenes, lengths: pd.Series, src: str, species="human", db1=None):
     """The master plotter of postoga"""
 
     log = Log.connect(path, Constants.FileNames.LOG)
     log.record(f"postoga finished processing data! building report...")
 
     set_font()
+    os.makedirs(os.path.join(path, Constants.DirNames.FIGURES), exist_ok=True)
 
-    fig = plt.figure(figsize=(7, 12))
-    plt.subplots_adjust(hspace=0.8)
-    gs = gridspec.GridSpec(4, 2, height_ratios=[0.09, 1, 1, 1])
-
+    # fig = plt.figure(figsize=(7, 12))
+    # plt.subplots_adjust(hspace=0.8)
+    # gs = gridspec.GridSpec(4, 2, height_ratios=[0.09, 1, 1, 1])
+    #
     # display metadata on plot
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    commit = shell(Constants.Commands.COMMIT)
-    branch = shell(Constants.Commands.BRANCH)
+    # commit = shell(Constants.Commands.COMMIT)
+    # branch = shell(Constants.Commands.BRANCH)
 
-    fig.text(0.67, 0.82, Constants.PLOTSTAMP.format(timestamp, __version__, branch, commit), fontsize=8, ha="center")
-
-    fig.text(0.1, 0.79, "A", fontsize=15, ha="center")
-    fig.text(0.1, 0.525, "C", fontsize=15, ha="center")
-    fig.text(0.1, 0.28, "D", fontsize=15, ha="center")
-    fig.text(0.52, 0.28, "E", fontsize=15, ha="center")
-
-    # display logo
-    logo_img = plt.imread(Constants.FileNames.LOGO_IMG) # "./supply/postoga_logo.png")
-    logo = OffsetImage(logo_img, zoom=0.2)
-    ax_logo = fig.add_subplot(gs[0, 0])
-    ax_logo.add_artist(AnnotationBbox(logo, (0.25, 0.75), frameon=False))
-    ax_logo.axis("off")
-
-    # init subplots
-    ax1 = fig.add_subplot(gs[1, 0])
-    ax2 = fig.add_subplot(gs[1, 1])
-    ax3 = fig.add_subplot(gs[2, :])
-    ax4 = fig.add_subplot(gs[3, 0])
-    ax5 = fig.add_subplot(gs[3, 1])
-
+    # fig.text(0.67, 0.82, Constants.PLOTSTAMP.format(timestamp, __version__, branch, commit), fontsize=8, ha="center")
+    #
+    # fig.text(0.1, 0.79, "A", fontsize=15, ha="center")
+    # fig.text(0.1, 0.525, "C", fontsize=15, ha="center")
+    # fig.text(0.1, 0.28, "D", fontsize=15, ha="center")
+    # fig.text(0.52, 0.28, "E", fontsize=15, ha="center")
+    #
+    # # display logo
+    # logo_img = plt.imread(Constants.FileNames.LOGO_IMG) # "./supply/postoga_logo.png")
+    # logo = OffsetImage(logo_img, zoom=0.2)
+    # ax_logo = fig.add_subplot(gs[0, 0])
+    # ax_logo.add_artist(AnnotationBbox(logo, (0.25, 0.75), frameon=False))
+    # ax_logo.axis("off")
+  
+    # # init subplots
+    # ax1 = fig.add_subplot(gs[1, 0])
+    # ax2 = fig.add_subplot(gs[1, 1])
+    # ax3 = fig.add_subplot(gs[2, :])
+    # ax4 = fig.add_subplot(gs[3, 0])
+    # ax5 = fig.add_subplot(gs[3, 1])
+    #
+ 
     if db1:
-        make_query_barplot_stats(db, ax1, True)
-        make_query_barplot_stats(db1, ax2, False)
-        fig.text(0.52, 0.79, "B", fontsize=15, ha="center")
+        make_query_barplot_stats(path, [db,db1])
     else:
-        make_query_barplot_stats(db, ax1, True)
+        make_query_barplot_stats(path, [db])
 
-    make_boxplot_annotated_genes(species, ngenes, ax3)
-    make_ancestral_barplot(ancestral, ax4)
-    make_scatter_for_mammals(ancestral, ax5)
-
-    plt.savefig(
-        os.path.join(path, Constants.FileNames.PDF),
-        format="pdf",
-        bbox_inches="tight",
-        dpi=300,
-    )
+    make_scores_histogram(path, table)
+    make_boxplot_annotated_genes(path, species, ngenes)
+    make_ancestral_barplot(path, ancestral, src)
+    make_scatter_for_mammals(path, ancestral, src)
+    make_lengths_histogram(path, lengths)
