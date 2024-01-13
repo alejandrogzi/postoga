@@ -5,6 +5,6 @@
 	path = bed2gff
   url = https://github.com/alejandrogzi/bed2gff
 [submodule "noel"]
-  path = noel
-  url = https://github.com/alejandrogzi/noel
+	path = noel
+	url = https://github.com/alejandrogzi/noel
 
