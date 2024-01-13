@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 
-""" A moduule to write isoforms in gene:transcript pair format to a text file. """
+""" A module to write isoforms in gene:transcript pair format to a text file. """
 
 
 import pandas as pd
@@ -9,11 +9,12 @@ import os
 from constants import Constants
 from logger import Log
 
+pd.options.mode.chained_assignment = None  # default='warn'
 
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.6.0-devel"
+__version__ = "0.7.0-devel"
 
 
 def isoform_writer(path: str, table: pd.DataFrame) -> str:
@@ -32,6 +33,7 @@ def isoform_writer(path: str, table: pd.DataFrame) -> str:
 
     # Get only gene:transcript pairs
     table = table.iloc[:, [0, 2]]
+    table.dropna(inplace=True)
     table.to_csv(f, sep="\t", header=None, index=False)
 
     log.record(f"gene-to-projection hash with {len(table)} entries written to {f}")
