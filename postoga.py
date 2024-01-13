@@ -23,12 +23,12 @@ from modules.filter_query_annotation import filter_bed, get_stats_from_bed
 from modules.assembly_stats import qual_by_ancestral
 from modules.haplotype_branch import merge_haplotypes
 from modules.plotter import postoga_plotter
-
+from modules.ortholog_lengths import calculate_lengths
 
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.6.0-devel"
+__version__ = "0.7.0-devel"
 
 
 class TogaDir:
@@ -56,6 +56,7 @@ class TogaDir:
             self.by_rel = args.by_rel if args.by_rel else None
             self.threshold = args.threshold if args.threshold else None
             self.species = args.species
+            self.source = args.source
         else:
             """The haplotype branch of postoga"""
             self.paths = args.haplotype_path.split(",")
@@ -95,20 +96,30 @@ class TogaDir:
                 self.stats = None
 
             if self.to == "gtf":
-                self.gtf = bed_to_gtf(self.path, self.bed, self.isoforms)
+                self.gmodel = bed_to_gtf(self.path, self.bed, self.isoforms)
             elif self.to == "gff":
-                self.gff = bed_to_gff(self.path, self.bed, self.isoforms)
+                self.gmodel = bed_to_gff(self.path, self.bed, self.isoforms)
 
             ##### STEP 2 #####
             self.ancestral_stats = qual_by_ancestral(
-                self.path, self.bed, self.table, self.q_assembly
+                self.path, self.bed, self.table, self.q_assembly, self.source
             )
+
+            ##### STEP 3 #####
+            self.ortholog_lengths = calculate_lengths(self.path, self.gmodel)
+
+            ##### STEP 4 #####
+
+            # self.completeness_stats = qual_by_busco()
 
             postoga_plotter(
                 self.path,
+                self.table,
                 self.ancestral_stats,
                 self.base_stats,
                 self.ngenes,
+                self.ortholog_lengths,
+                self.source,
                 self.species,
                 self.stats,
             )
@@ -170,6 +181,15 @@ def base_branch(subparsers):
         choices=["human", "mouse", "chicken"],
         type=str,
         default=Constants.SPECIES_DEFAULT,
+    )
+    base_parser.add_argument(
+        "-src",
+        "--source",
+        help="Source of the ancestral gene names (default: ENSG)",
+        required=False,
+        choices=["ensembl", "gene_name", "entrez"],
+        type=str,
+        default=Constants.SRC_DEFAULT,
     )
 
 
