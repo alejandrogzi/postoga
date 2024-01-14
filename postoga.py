@@ -199,7 +199,7 @@ def base_branch(subparsers):
     base_parser.add_argument(
         "-phy",
         "--phylo",
-        help="Phylogenetic group of your species (default: mammal)",
+        help="Phylogenetic group of your species (default: mammals)",
         required=False,
         choices=["mammals", "birds"],
         type=str,
