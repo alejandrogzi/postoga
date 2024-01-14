@@ -38,7 +38,7 @@ def query_table(path: str) -> pd.DataFrame:
         os.path.join(path, Constants.FileNames.ISOFORMS), sep="\t", header=None
     )
     # quality = pd.read_csv(os.path.join(path, Constants.FileNames.QUALITY), sep="\t")
- 
+
     # Creates a dictionary: transcript -> gene
     isoforms_dict = isoforms.set_index(1).to_dict().get(0)
 

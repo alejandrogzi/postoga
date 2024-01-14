@@ -22,7 +22,9 @@ def noel_lengths(path: str, model: str) -> str:
     """
     log = Log.connect(path, Constants.FileNames.LOG)
 
-    cmd = f"{Constants.ToolNames.NOEL} -g {model} -o {path}/{Constants.FileNames.LENGTHS}"
+    cmd = (
+        f"{Constants.ToolNames.NOEL} -g {model} -o {path}/{Constants.FileNames.LENGTHS}"
+    )
     sh = shell(cmd)
 
     info = [
@@ -67,7 +69,7 @@ def process_lenghts(path: str, lengths: str) -> pd.Series:
     return df["lengths"]
 
 
-def calculate_lengths(path:str, model:str) -> pd.Series:
+def calculate_lengths(path: str, model: str) -> pd.Series:
     """
     Calculate the distribution of ortholog lengths in the resulting gtf/gff file.
 

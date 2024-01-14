@@ -67,7 +67,6 @@ def bed_to_gff(path: str, bed: str, isoforms: str) -> str:
         f"running {cmd}",
         sh,
         f"gff file written to {gff}",
-
     ]
 
     [log.record(i) for i in info]

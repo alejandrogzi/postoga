@@ -91,7 +91,7 @@ def filter_bed(
         # custom_table["confidence_level"].value_counts().to_dict(),
     ]
 
-    return f, stats, len(custom_table["t_gene"].unique())
+    return f, stats, len(custom_table["t_gene"].unique()), custom_table
 
 
 def get_stats_from_bed(bed: str, table: pd.DataFrame):
