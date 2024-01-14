@@ -5,7 +5,9 @@ The post-TOGA processing pipeline.
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 ![version](https://img.shields.io/badge/version-0.7.0--devel-orange)
 
-<img src="./supply/postoga_logo_git.png" width=500 align="center" />
+<p align="center">
+    <img width=700 align="center" src="./supply/postoga_logo_git.png" >
+</p>
 
 <!-- <img src="./supply/postoga_report.png" align="center"/> -->
 
@@ -40,6 +42,11 @@ branch: master
 [XXXXXX] - INFO: found 10 projections, 10 unique transcripts, 10 unique genes
 ```
 
+> [!NOTE]
+>
+> postoga is dependent from TOGA. Any changes in TOGA will have a repercusion here. If you found any bug/errors, please report them here.
+> This project is in constant development, any desired features are welcome!
+
 Here is a descrption of postoga features:
 
 ```text
@@ -69,6 +76,10 @@ optional arguments:
                         Species name to be used as a reference for the assembly quality calculation (default: human)
   -src {ensembl,gene_name,entrez}, --source {ensembl,gene_name,entrez}
                         DB source to overlap ancestral genes (default: ensembl)
+  -phy {mammals,birds}, --phylo {mammal,birds}
+                        Phylogenetic group of your species to be used to use a set of BUSCO DBs (default: mammals)
+                        mammals -> eukaryota, vertebrata, mammalia, eutheria
+                        birds -> eukaryota, vertebrata, aves
 
 postoga.py haplotype [-h] -hp HAPLOTYPE_PATH [-r RULE] [-s {query,loss}]
 
@@ -84,8 +95,13 @@ optional arguments:
 
 ## What's new on version 0.7.0-devel
 
-
-- to be filled
+- The old `POSTOGA_REPORT.pdf` is deprecated. Now all the stats are plotted separatly and send to a directory called `POSTOGA_FIGURES`
+- Now postoga evaluates all the non-overlapping exon lenghts of your annotation and outputs additional stats about it
+- Instead of implementing a way to perform BUSCO completeness from scratch, postoga uses a set of curated DBs to evaluate your assembly completeness
+- Introducing --source. Now you can choose which gene nomeclature background postoga should use: ensmebl IDs, gene names or Entrez IDs.
+- Introducing --phylo. Now you can choose the phylo group of your species to be use a set of BUSCO DBs. See arguments.
+- Some changes from the last PR where rolled back. This version of postoga is up to date with TOGA's output dir structure.
+- The quality of transcript is no longer considered in this release. postoga now uses orthology prediction scores as an implicit source for quality.
 
 ## TO DO's
 
@@ -103,8 +119,8 @@ optional arguments:
 
 - [x] Build Graph class automating plotting reports -> need to define canvas structure and plot types to a default report (relevant variables)
 
-- [ ] postoga STEP 3: alignment stats -> rust binding + ortholog lengths (?)
+- [x] postoga STEP 3: alignment stats -> rust binding + ortholog lengths (?)
 
-- [ ] postoga STEP 4: implement [compleasm](https://github.com/huangnengCSU/compleasm) an efficient alternative to BUSCO -> could be compared with assembly_stats.py -> then compared with an existente database of mammalian/placental genomes (?)
+- [x] postoga STEP 4: pseudo-BUSCO fast comparison
 
-- [ ] ask Bogdan/Michael/Scott feedback and ideas
+- [x] ask Bogdan/Michael/Scott feedback and ideas
