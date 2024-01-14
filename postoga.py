@@ -20,7 +20,7 @@ from modules.convert_from_bed import bed_to_gtf, bed_to_gff
 from modules.make_query_table import query_table
 from modules.write_isoforms import isoform_writer
 from modules.filter_query_annotation import filter_bed, get_stats_from_bed
-from modules.assembly_stats import qual_by_ancestral
+from modules.assembly_stats import qual_by_ancestral, busco_completeness
 from modules.haplotype_branch import merge_haplotypes
 from modules.plotter import postoga_plotter
 from modules.ortholog_lengths import calculate_lengths
@@ -57,6 +57,7 @@ class TogaDir:
             self.threshold = args.threshold if args.threshold else None
             self.species = args.species
             self.source = args.source
+            self.phylo = args.phylo
         else:
             """The haplotype branch of postoga"""
             self.paths = args.haplotype_path.split(",")
@@ -84,7 +85,7 @@ class TogaDir:
             self.isoforms = isoform_writer(self.path, self.table)
 
             if any([self.by_class, self.by_rel, self.threshold]):
-                self.bed, self.stats, self.ngenes = filter_bed(
+                self.bed, self.stats, self.ngenes, self.custom_table = filter_bed(
                     self.path, self.table, self.by_class, self.by_rel, self.threshold
                 )
                 self.base_stats, _ = get_stats_from_bed(
@@ -94,6 +95,7 @@ class TogaDir:
                 self.bed = os.path.join(self.path, Constants.FileNames.BED)
                 self.base_stats, self.ngenes = get_stats_from_bed(self.bed, self.table)
                 self.stats = None
+                self.custom_table = self.table
 
             if self.to == "gtf":
                 self.gmodel = bed_to_gtf(self.path, self.bed, self.isoforms)
@@ -102,7 +104,7 @@ class TogaDir:
 
             ##### STEP 2 #####
             self.ancestral_stats = qual_by_ancestral(
-                self.path, self.bed, self.table, self.q_assembly, self.source
+                self.path, self.bed, self.custom_table, self.q_assembly, self.source
             )
 
             ##### STEP 3 #####
@@ -110,7 +112,9 @@ class TogaDir:
 
             ##### STEP 4 #####
 
-            # self.completeness_stats = qual_by_busco()
+            self.completeness_stats = busco_completeness(
+                self.path, self.custom_table, self.source, self.phylo
+            )
 
             postoga_plotter(
                 self.path,
@@ -120,6 +124,7 @@ class TogaDir:
                 self.ngenes,
                 self.ortholog_lengths,
                 self.source,
+                self.completeness_stats,
                 self.species,
                 self.stats,
             )
@@ -190,6 +195,15 @@ def base_branch(subparsers):
         choices=["ensembl", "gene_name", "entrez"],
         type=str,
         default=Constants.SRC_DEFAULT,
+    )
+    base_parser.add_argument(
+        "-phy",
+        "--phylo",
+        help="Phylogenetic group of your species (default: mammal)",
+        required=False,
+        choices=["mammals", "birds"],
+        type=str,
+        default=Constants.PHYLO_DEFAULT,
     )
 
 
