@@ -31,3 +31,12 @@
 - Modules have been updated to synchronize with plotter module.
 - Added plotter-dependent project-wide constants
 - Implemented `get_stats_from_bed` under `filter_query_annotation`, to quickly extract query stats 
+
+## postoga v.0.7.0-devel
+
+- Now postoga evaluates all the non-overlapping exon lenghts of your annotation and outputs additional stats about it
+- Instead of implementing a way to perform BUSCO completeness from scratch, postoga uses a set of curated DBs to evaluate your assembly completeness
+- Introducing --source. Now you can choose which gene nomeclature background postoga should use: ensmebl IDs, gene names or Entrez IDs.
+- Introducing --phylo. Now you can choose the phylo group of your species to be use a set of BUSCO DBs. See arguments.
+- Some changes from the last PR where rolled back. This version of postoga is up to date with TOGA's output dir structure.
+- The quality of transcript is no longer considered in this release. postoga now uses orthology prediction scores as an implicit source for quality.
