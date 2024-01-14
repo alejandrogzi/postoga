@@ -25,7 +25,7 @@ __version__ = "0.7.0-devel"
 
 
 def set_font():
-    font_dir = Constants.FileNames.FONT #"./supply/font/Arial.ttf"
+    font_dir = Constants.FileNames.FONT  # "./supply/font/Arial.ttf"
     font_manager.fontManager.addfont(font_dir)
     plt.rcParams["font.family"] = "Arial"
 
@@ -50,10 +50,10 @@ def bar_setup(ax):
 
 
 def make_boxplot_annotated_genes(
-        path: str, reference: str, ngenes: int):  # reference must be "human", "mouse" or "chicken"; ngenes: number of genes annotated
-    
+    path: str, reference: str, ngenes: int
+):  # reference must be "human", "mouse" or "chicken"; ngenes: number of genes annotated
     set_font()
-    fig, ax = plt.subplots(figsize=(9,4))
+    fig, ax = plt.subplots(figsize=(9, 4))
 
     if reference != "chicken":
         df = pd.read_csv(
@@ -173,16 +173,17 @@ def make_boxplot_annotated_genes(
     )
 
     plt.savefig(
-        os.path.join(path, Constants.DirNames.FIGURES, Constants.FigNames.ANNOTATION_BOXPLOT),
-        format="pdf",
+        os.path.join(
+            path, Constants.DirNames.FIGURES, Constants.FigNames.ANNOTATION_BOXPLOT
+        ),
+        format=Constants.FigNames.PLOTTING_FORMAT,
         bbox_inches="tight",
         dpi=300,
     )
 
 
 def make_query_barplot_stats(path: str, dbs: list):
-    
-    fig, (ax1, ax2) = plt.subplots(1,2)
+    fig, (ax1, ax2) = plt.subplots(1, 2)
     axs = [ax1, ax2]
 
     for idx, db in enumerate(dbs):
@@ -235,16 +236,16 @@ def make_query_barplot_stats(path: str, dbs: list):
             axs[idx].set_title("Filtered annotation", ha="center", fontsize=11)
         else:
             axs[idx].set_title("Base annotation", ha="center", fontsize=11)
- 
+
             axs[idx].legend(
-            custom_legend_labels,
-            bbox_to_anchor=(1.85, -0.2),
-            frameon=False,
-            handlelength=1,
-            handleheight=1,
-            fontsize="small",
-            ncol=4,
-        )
+                custom_legend_labels,
+                bbox_to_anchor=(1.85, -0.2),
+                frameon=False,
+                handlelength=1,
+                handleheight=1,
+                fontsize="small",
+                ncol=4,
+            )
 
         bar_setup(axs[idx])
 
@@ -258,13 +259,13 @@ def make_query_barplot_stats(path: str, dbs: list):
                 fontsize=10,
             )
 
-
     plt.savefig(
         os.path.join(path, Constants.DirNames.FIGURES, Constants.FigNames.BARPLOT),
-        format="pdf",
+        format=Constants.FigNames.PLOTTING_FORMAT,
         bbox_inches="tight",
         dpi=300,
     )
+
 
 def get_reduced_ancestral_dict(ancestral: dict, src: str):
     # Calculate mut and missing
@@ -293,7 +294,6 @@ def get_reduced_ancestral_dict(ancestral: dict, src: str):
 
 
 def make_scatter_for_mammals(path: str, ancestral: dict, source: str):
-    
     fig, ax = plt.subplots()
 
     df = pd.read_csv(
@@ -324,7 +324,7 @@ def make_scatter_for_mammals(path: str, ancestral: dict, source: str):
     # if len(ancestral_values) == 2:
     #     ancestral_values = [0] + ancestral_values
     # df.loc[len(df.index), :] = ["User", "User"] + ancestral_values
-    
+
     df.loc[len(df.index), :] = ["User", "User"] + list(ancestral_dict.values())
     df.iloc[:, 2:] = df.iloc[:, 2:] / Constants.ANCESTRAL_NGENES[source]
 
@@ -358,16 +358,16 @@ def make_scatter_for_mammals(path: str, ancestral: dict, source: str):
     ax.set_ylabel("%ancestral genes with\ninactivating mutations")
 
     plt.savefig(
-        os.path.join(path, Constants.DirNames.FIGURES, Constants.FigNames.ANCESTRAL_SCATTER),
-        format="pdf",
+        os.path.join(
+            path, Constants.DirNames.FIGURES, Constants.FigNames.ANCESTRAL_SCATTER
+        ),
+        format=Constants.FigNames.PLOTTING_FORMAT,
         bbox_inches="tight",
         dpi=300,
     )
 
 
-
 def make_ancestral_barplot(path: str, ancestral: dict, source):
-    
     fig, ax = plt.subplots(figsize=(7, 5))
 
     ancestral_dict = get_reduced_ancestral_dict(ancestral, source)
@@ -387,22 +387,24 @@ def make_ancestral_barplot(path: str, ancestral: dict, source):
     ax.set_title("Ancestral classes in annotation", fontsize=11, ha="center")
 
     plt.savefig(
-        os.path.join(path, Constants.DirNames.FIGURES, Constants.FigNames.ANCESTRAL_BARPLOT),
-        format="pdf",
+        os.path.join(
+            path, Constants.DirNames.FIGURES, Constants.FigNames.ANCESTRAL_BARPLOT
+        ),
+        format=Constants.FigNames.PLOTTING_FORMAT,
         bbox_inches="tight",
         dpi=300,
     )
 
 
-
 def make_lengths_histogram(path: str, lengths: pd.Series):
-
     fig, ax = plt.subplots(figsize=(7, 5))
     mean = np.mean(lengths)
     sd = np.std(lengths)
     median = np.median(lengths)
 
-    n, bins, patches = ax.hist(lengths, bins=Constants.HIST_NBINS, density=True, alpha=0.5)
+    n, bins, patches = ax.hist(
+        lengths, bins=Constants.HIST_NBINS, density=True, alpha=0.5
+    )
     n.sort()
     ax.text(bins[-20], n[-5], f"Mean: {mean:.6}\nMedian:{median:.6}\nStd: {sd:.6}")
     ax.set_xlabel("Gene lengths [bp]")
@@ -411,14 +413,13 @@ def make_lengths_histogram(path: str, lengths: pd.Series):
 
     plt.savefig(
         os.path.join(path, Constants.DirNames.FIGURES, Constants.FigNames.LENGTHS_PLOT),
-        format="pdf",
+        format=Constants.FigNames.PLOTTING_FORMAT,
         bbox_inches="tight",
         dpi=300,
     )
 
 
 def make_scores_histogram(path: str, table: pd.DataFrame):
-
     fig, ax = plt.subplots(figsize=(7, 4))
 
     scores = table[table["pred"] > 0]["pred"]
@@ -428,20 +429,53 @@ def make_scores_histogram(path: str, table: pd.DataFrame):
 
     n, bins, patches = ax.hist(scores, bins=50, density=False, alpha=0.5)
     n.sort()
-    ax.text(bins[5], n[-1]/1.5, f"Mean: {mean:.6}\nMedian:{median:.6}\nStd: {sd:.6}")
+    ax.text(bins[5], n[-1] / 1.5, f"Mean: {mean:.6}\nMedian:{median:.6}\nStd: {sd:.6}")
     ax.set_xlabel("Prediction scores")
     ax.set_ylabel("Number of transcripts")
     ax.set_title("Orthology score distribution", fontsize=12, ha="center")
 
     plt.savefig(
         os.path.join(path, Constants.DirNames.FIGURES, Constants.FigNames.SCORE_PLOT),
-        format="pdf",
+        format=Constants.FigNames.PLOTTING_FORMAT,
         bbox_inches="tight",
         dpi=300,
     )
 
 
-def postoga_plotter(path: str, table: pd.DataFrame, ancestral: dict, db: list, ngenes, lengths: pd.Series, src: str, species="human", db1=None):
+def make_busco_barplot(path: str, stats: list):
+    ax = pd.DataFrame(stats).plot(kind="bar")
+    ax.set_title("BUSCO completeness of your assembly")
+    ax.set_ylabel("Completeness proportion (%)")
+
+    for idx, pair in enumerate(stats):
+        ax.text(idx - 0.15, 5, f"{pair[1]:.4}")
+
+    ax.set_xticklabels([x[0] for x in stats], rotation=45)
+    ax.legend().remove()
+    ax.set_ylim(0, 100.5)
+
+    plt.savefig(
+        os.path.join(
+            path, Constants.DirNames.FIGURES, Constants.FigNames.BUSCO_BARPLOT
+        ),
+        format=Constants.FigNames.PLOTTING_FORMAT,
+        bbox_inches="tight",
+        dpi=300,
+    )
+
+
+def postoga_plotter(
+    path: str,
+    table: pd.DataFrame,
+    ancestral: dict,
+    db: list,
+    ngenes,
+    lengths: pd.Series,
+    src: str,
+    busco_stats: list,
+    species="human",
+    db1=None,
+):
     """The master plotter of postoga"""
 
     log = Log.connect(path, Constants.FileNames.LOG)
@@ -471,7 +505,7 @@ def postoga_plotter(path: str, table: pd.DataFrame, ancestral: dict, db: list, n
     # ax_logo = fig.add_subplot(gs[0, 0])
     # ax_logo.add_artist(AnnotationBbox(logo, (0.25, 0.75), frameon=False))
     # ax_logo.axis("off")
-  
+
     # # init subplots
     # ax1 = fig.add_subplot(gs[1, 0])
     # ax2 = fig.add_subplot(gs[1, 1])
@@ -479,9 +513,9 @@ def postoga_plotter(path: str, table: pd.DataFrame, ancestral: dict, db: list, n
     # ax4 = fig.add_subplot(gs[3, 0])
     # ax5 = fig.add_subplot(gs[3, 1])
     #
- 
+
     if db1:
-        make_query_barplot_stats(path, [db,db1])
+        make_query_barplot_stats(path, [db, db1])
     else:
         make_query_barplot_stats(path, [db])
 
@@ -490,3 +524,4 @@ def postoga_plotter(path: str, table: pd.DataFrame, ancestral: dict, db: list, n
     make_ancestral_barplot(path, ancestral, src)
     make_scatter_for_mammals(path, ancestral, src)
     make_lengths_histogram(path, lengths)
+    make_busco_barplot(path, busco_stats)
