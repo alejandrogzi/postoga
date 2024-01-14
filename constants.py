@@ -113,7 +113,11 @@ class Constants:
     ANCESTRAL_NGENES_ENSEMBL = 18430
     ANCESTRAL_NGENES_ENTREZ = 18268
     ANCESTRAL_NGENES_NAME = 18359
-    ANCESTRAL_NGENES = { "ensembl": ANCESTRAL_NGENES_ENSEMBL, "entrez": ANCESTRAL_NGENES_ENTREZ, "gene_name": ANCESTRAL_NGENES_NAME }
+    ANCESTRAL_NGENES = {
+        "ensembl": ANCESTRAL_NGENES_ENSEMBL,
+        "entrez": ANCESTRAL_NGENES_ENTREZ,
+        "gene_name": ANCESTRAL_NGENES_NAME,
+    }
     SUPERORDER = ["Laurasiatheria", "Euarchontoglires", "User"]
     SUPERORDER_COLORS = {
         "Laurasiatheria": "black",
@@ -130,23 +134,31 @@ class Constants:
     or any other inquire, please visit our GitHub repository at
     github.com/alejandrogzi/postoga."""
     HIST_NBINS = 50
+    PHYLO_DEFAULT = "mammals"
+    BUSCO_DBS_BASE = {"eukaryota": "eukaryota_odb10", "vertebrata": "vertebrata_odb10"}
+    BUSCO_DBS_MAMMALS = {
+        "mammalia": "mammalia_odb10",
+        "eutheria": "eutheria_odb10",
+    }  # Carnivora
+    BUSCO_DBS_BIRDS = {"aves": "aves_odb10"}  # Passeriformes
 
     class ToolNames:
         BED2GTF = "bed2gtf"
         BED2GFF = "bed2gff"
-        COMPLEASM = "compleasm"
         NOEL = "noel"
 
     class DirNames:
         FIGURES = "POSTOGA_FIGURES"
 
     class FigNames:
-        LENGTHS_PLOT = "ortholog_lengths.pdf"
-        BARPLOT = "qual_barplot.pdf"
-        SCORE_PLOT = "orthology_scores.pdf"
-        ANNOTATION_BOXPLOT = "annotation_boxplot.pdf"
-        ANCESTRAL_BARPLOT = "ancestral_barplot.pdf"
-        ANCESTRAL_SCATTER = "ancestral_scatterplot.pdf"
+        PLOTTING_FORMAT = "jpeg"  # choices = ["pdf", "png", "svg", "jpg", "jpeg", "tif", "tiff", "eps", "ps"]
+        LENGTHS_PLOT = f"ortholog_lengths.{PLOTTING_FORMAT}"
+        BARPLOT = f"qual_barplot.{PLOTTING_FORMAT}"
+        SCORE_PLOT = f"orthology_scores.{PLOTTING_FORMAT}"
+        ANNOTATION_BOXPLOT = f"annotation_boxplot.{PLOTTING_FORMAT}"
+        ANCESTRAL_BARPLOT = f"ancestral_barplot.{PLOTTING_FORMAT}"
+        ANCESTRAL_SCATTER = f"ancestral_scatterplot.{PLOTTING_FORMAT}"
+        BUSCO_BARPLOT = f"busco_completeness.{PLOTTING_FORMAT}"
 
     class FileNames:
         SUPPLY_FOLDER = resources.files(supply)
@@ -163,13 +175,19 @@ class Constants:
         FILTERED_GFF = f"{FILTERED_BED.split('.')[0]}.gff"
         NUCLEOTIDE = "nucleotide.fasta"
         CLASS = "loss_summ_data.tsv"
-        SCORES = os.path.join("temp", "orthology_scores.tsv")
+        SCORES = "orthology_scores.tsv" #os.path.join("temp", "orthology_scores.tsv")
         LOG = "postoga.log"
         QUALITY = os.path.join("temp", "transcript_quality.tsv")
-        ANCESTRAL = SUPPLY_FOLDER.joinpath("Ancestral_placental_complete.txt") # os.path.join("./supply", "Ancestral_placental.txt")
+        ANCESTRAL = SUPPLY_FOLDER.joinpath(
+            "Ancestral_placental_complete.txt"
+        )  # os.path.join("./supply", "Ancestral_placental.txt")
         HAPLOTYPE = "merged_assemblies.txt"
-        MAMMALS = SUPPLY_FOLDER.joinpath("mammal_genes_template.txt") # os.path.join("./supply", "mammal_genes_template.txt")
-        BIRDS = SUPPLY_FOLDER.joinpath("birds_genes_template.txt") #os.path.join("./supply", "birds_genes_template.txt")
+        MAMMALS = SUPPLY_FOLDER.joinpath(
+            "mammal_genes_template.txt"
+        )  # os.path.join("./supply", "mammal_genes_template.txt")
+        BIRDS = SUPPLY_FOLDER.joinpath(
+            "birds_genes_template.txt"
+        )  # os.path.join("./supply", "birds_genes_template.txt")
         LOGO_IMG = SUPPLY_FOLDER.joinpath("postoga_logo.png")
         FONT = SUPPLY_FOLDER.joinpath("font/Arial.ttf")
         PDF = "POSTOGA_REPORT.pdf"
