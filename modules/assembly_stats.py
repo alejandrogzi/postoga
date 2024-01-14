@@ -75,3 +75,59 @@ def qual_by_ancestral(
     log.record(f"ancestral genes in query by class: {stats}")
 
     return stats
+
+
+def overlap_busco(path: str, db: str, table: pd.DataFrame, src: str) -> float:
+    """
+    @type db: str
+    @param db: path to the BUSCO database
+    @type table: pd.DataFrame
+    @param table: a pandas DataFrame
+    @type src: str
+    @param src: source of the query annotation (ensembl, entrez, gene_name)
+    """
+
+    log = Log.connect(path, Constants.FileNames.LOG)
+    track = []
+
+    for odb in db:
+        log.record(f"running pseudo-BUSCO for {odb} database")
+        odb_path = f"{Constants.FileNames.SUPPLY_FOLDER}/odbs/{odb}.txt"
+        odb_df = pd.read_csv(odb_path, sep="\t")
+        odb_df = odb_df.loc[odb_df[src].dropna().index]
+        log.record(
+            f"number of genes in {odb} database with {src} nomenclature: {len(odb_df)}"
+        )
+
+        overlap = set(odb_df[src]).intersection(set(table["t_gene"]))
+        track.append((odb, len(overlap) / len(odb_df) * 100))
+
+    return track
+
+
+def busco_completeness(path: str, table: pd.DataFrame, src: str, phylo: str) -> list:
+    """
+    @type path: str
+    @param path: path to the results directory
+    @type table: pd.DataFrame
+    @param table: a pandas DataFrame with the custom query table
+    @type src: str
+    @param src: source of the query annotation (ensembl, entrez, gene_name)
+    @type phylo: str
+    @param phylo: phylogenetic group of the query annotation (mammals, birds)
+    """
+
+    log = Log.connect(path, Constants.FileNames.LOG)
+
+    # Base functionality: compare assembly against eukaryota and vertebrata BUSCO databases
+    base = overlap_busco(path, Constants.BUSCO_DBS_BASE.values(), table, src)
+
+    if phylo == "mammals":
+        supp = overlap_busco(path, Constants.BUSCO_DBS_MAMMALS.values(), table, src)
+    elif phylo == "aves":
+        supp = overlap_busco(path, Constants.BUSCO_DBS_BIRDS.values(), table, src)
+
+    stats = base + supp
+    log.record(f"pseudo-BUSCO stats: {stats}")
+
+    return stats
