@@ -12,11 +12,11 @@ __github__ = "https://github.com/alejandrogzi"
 __version__ = "0.4.0-devel"
 
 
-packages = ["pandas==2.0.2", "numpy==1.24.3", "matplotlib==3.8.0", "importlib.resources"]
+packages = ["pandas==2.0.2", "numpy==1.24.3", "matplotlib==3.8.0", "importlib.resources", "supply"]
 
 for package in packages:
     try:
-        subprocess.check_call(["pip", "install", package])
+        subprocess.check_call(["pip3", "install", package])
         print(f"Installed {package} successfully.")
     except subprocess.CalledProcessError:
         print(f"Failed to install {package}.")
