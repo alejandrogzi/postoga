@@ -44,7 +44,7 @@ def query_table(path: str) -> pd.DataFrame:
 
     # Subsets loss to consider only projections
     loss = loss[loss["projection"] == "PROJECTION"]
-    loss["helper"] = loss["transcript"].str.rsplit(".", 1).str[0]
+    loss["helper"] = loss["transcript"].str.rsplit(".", n=1).str[0]
 
     ortho_x_loss = pd.merge(
         orthology, loss, left_on="q_transcript", right_on="transcript", how="outer"
