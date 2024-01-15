@@ -21,7 +21,11 @@ To use postoga, just do:
 git clone --recursive https://github.com/alejandrogzi/postoga.git
 cd postoga
 
-# call configure.sh to install dependencies
+# create an environment (recommended)
+conda env create -f env.yml
+conda activate postoga
+
+# OR call configure.sh to install dependencies
 ./configure.sh
 
 # run a test to confirm functionality
