@@ -45,7 +45,7 @@ import logging
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.7.0-devel"
+__version__ = "0.8.0-devel"
 
 
 class Log:
@@ -75,8 +75,12 @@ class Log:
         with open(self.log_file, "w") as log:
             log.write("\n".join([start_message, metadata]))
 
+        print(start_message + "\n" + metadata)
+
     def record(self, message, timestamp=True):
         logging.info(message)
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"[{timestamp}] - INFO: {message}")
 
     @classmethod
     def connect(cls, path, log_file):
