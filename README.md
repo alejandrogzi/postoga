@@ -3,7 +3,7 @@
 The post-TOGA processing pipeline.
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-![version](https://img.shields.io/badge/version-0.7.0--devel-orange)
+![version](https://img.shields.io/badge/version-0.8.0--devel-orange)
 
 <p align="center">
     <img width=700 align="center" src="./supply/postoga_logo_git.png" >
@@ -61,29 +61,30 @@ positional arguments:
     base            Base mode
     haplotype       Haplotype mode
 
-postoga.py base [-h] -p PATH [-bc BY_CLASS] [-br BY_REL] [-th THRESHOLD] -to {gtf,gff} [-aq ASSEMBLY_QUAL] [-sp {human,mouse,chicken}]
+postoga.py base [-h] -p PATH [-bc BY_CLASS] [-br BY_REL] [-th THRESHOLD] [-par PARALOG] [-to {gtf,gff,bed}] [-aq ASSEMBLY_QUAL] [-sp {human,mouse,chicken}]
 
 optional arguments:
-  -h, --help            Display help message
-  -p PATH, --path PATH  Path to TOGA results directory
+  -h, --help            Show this help message and exit
+  -p PATH, --path PATH  Path to TOGA results directory (all postoga results will be send to that location)
   -bc BY_CLASS, --by-class BY_CLASS
-                        Filter parameter to only include certain orthology classes (I, PI, UL, M, PM, L, UL)
+                        Filter parameter to only include certain orthology classes (I, PI, UL, M, PM, L, UL), specified with commas (e.g. I,PI,UL).
   -br BY_REL, --by-rel BY_REL
-                        Filter parameter to only include certain orthology relationships (o2o, o2m, m2m, m2m, o2z)
+                        Filter parameter to only include certain orthology relationships (o2o, o2m, m2m, m2m, o2z), specified with commas (e.g. o2o,o2m).
   -th THRESHOLD, --threshold THRESHOLD
                         Filter parameter to preserve orthology scores greater or equal to a given threshold (0.0 - 1.0)
-  -to {gtf,gff}, --to {gtf,gff}
-                        Specify the conversion format for .bed (query_annotation/filtered) file (gtf, gff3)
+  -to {gtf,gff,bed}, --to {gtf,gff,bed}
+                        Specify the conversion format for .bed (query_annotation/filtered) file (gtf, gff3) or just keep it as .bed (bed)
   -aq ASSEMBLY_QUAL, --assembly_qual ASSEMBLY_QUAL
                         Calculate assembly quality based on a list of genes provided by the user (default: Ancestral_placental.txt)
   -sp {human,mouse,chicken}, --species {human,mouse,chicken}
                         Species name to be used as a reference for the assembly quality calculation (default: human)
   -src {ensembl,gene_name,entrez}, --source {ensembl,gene_name,entrez}
-                        DB source to overlap ancestral genes (default: ensembl)
-  -phy {mammals,birds}, --phylo {mammal,birds}
-                        Phylogenetic group of your species to be used to use a set of BUSCO DBs (default: mammals)
-                        mammals -> eukaryota, vertebrata, mammalia, eutheria
-                        birds -> eukaryota, vertebrata, aves
+                        Source of the ancestral gene names (default: ENSG)
+  -phy {mammals,birds}, --phylo {mammals,birds}
+                        Phylogenetic group of your species (default: mammals)
+  -s, --skip            Skip steps 2, 3, and 4 and only filter the .bed file
+  -par PARALOG, --paralog PARALOG
+                        Filter parameter to preserve transcripts with paralog projection probabilities less or equal to a given threshold (0.0 - 1.0)
 
 postoga.py haplotype [-h] -hp HAPLOTYPE_PATH [-r RULE] [-s {query,loss}]
 
@@ -97,34 +98,10 @@ optional arguments:
 ```
 
 
-## What's new on version 0.7.0-devel
+## What's new on version 0.8.0-devel
 
-- The old `POSTOGA_REPORT.pdf` is deprecated. Now all the stats are plotted separatly and send to a directory called `POSTOGA_FIGURES`
-- Now postoga evaluates all the non-overlapping exon lenghts of your annotation and outputs additional stats about it
-- Instead of implementing a way to perform BUSCO completeness from scratch, postoga uses a set of curated DBs to evaluate your assembly completeness
-- Introducing --source. Now you can choose which gene nomeclature background postoga should use: ensmebl IDs, gene names or Entrez IDs.
-- Introducing --phylo. Now you can choose the phylo group of your species to be use a set of BUSCO DBs. See arguments.
-- Some changes from the last PR where rolled back. This version of postoga is up to date with TOGA's output dir structure.
-- The quality of transcript is no longer considered in this release. postoga now uses orthology prediction scores as an implicit source for quality.
+- Adds `--paralog`, a new argument to preserve transcripts with paralog projections probabilities less or equal to a given threshold.
+- Implements `--skip` to only use postoga as a filtering tool, skipping additional post-processing steps.
+- Adds `bed` as an option to `--to` to avoid the conversion to gtf/gff.
+- Modifies `logger.py` to send logging information to stdout (this is also written to `postoga.log`)
 
-## TO DO's
-
-- [x] Build logger/version/constants scripts
-
-- [x] postoga STEP 1: automate conversion from bed to gtf/gff -> bed2gtf will implement a sorting leaving dependecy on gtfsort (something already implemented in bed2gff
-
-- [x] test model with different naming nomenclatures (most recent TOGA versions)
-
-- [ ] Handle possible warnings of data (low number of intact genes, etc) within log file (?)
-
-- [x] Check/install/test requeriments (install_dependencies.py) -> rust, cargo, binaries (bed2gtf, bed2gff), compleasm (?)
-
-- [x] postoga STEP 2: assembly stats re-implementation -> https://github.com/hillerlab/TOGA/blob/master/supply/TOGA_assemblyStats.py
-
-- [x] Build Graph class automating plotting reports -> need to define canvas structure and plot types to a default report (relevant variables)
-
-- [x] postoga STEP 3: alignment stats -> rust binding + ortholog lengths (?)
-
-- [x] postoga STEP 4: pseudo-BUSCO fast comparison
-
-- [x] ask Bogdan/Michael/Scott feedback and ideas
