@@ -12,7 +12,7 @@ from logger import Log
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.7.0-devel"
+__version__ = "0.8.0-devel"
 
 
 def query_table(path: str) -> pd.DataFrame:
@@ -37,6 +37,7 @@ def query_table(path: str) -> pd.DataFrame:
     isoforms = pd.read_csv(
         os.path.join(path, Constants.FileNames.ISOFORMS), sep="\t", header=None
     )
+    paralogs = pd.read_csv(os.path.join(path, Constants.FileNames.PARALOGS), sep="\t", header=None, names=["transcripts"])
     # quality = pd.read_csv(os.path.join(path, Constants.FileNames.QUALITY), sep="\t")
 
     # Creates a dictionary: transcript -> gene
@@ -53,14 +54,21 @@ def query_table(path: str) -> pd.DataFrame:
     ortho_x_loss["helper"].fillna(ortho_x_loss["t_gene"], inplace=True)
 
     # Merge transcript names (under the column "gene") and chain IDs (under the column "chain")
-    score["transcripts"] = score["gene"] + "." + score["chain"].astype(str)
-    score = score[["transcripts", "pred"]]
+    score["transcripts"] = [f"{k}.{v}" for k,v in zip(score["gene"], score["chain"])]
+    score = score[["transcripts", "pred", "gene"]]
 
     table = pd.merge(ortho_x_loss, score, left_on="transcript", right_on="transcripts")
 
     # Create a new column with a rename orthology relationship
     table["relation"] = table["orthology_class"].map(Constants.ORTHOLOGY_TYPE)
     table["t_gene"].fillna(table["helper"].map(isoforms_dict), inplace=True)
+
+    # Add paralog probabilities
+    paralog = pd.merge(score, paralogs, on="transcripts").groupby("gene").agg({"pred": "max"}).reset_index()
+    paralog.columns = ["helper", "paralog_prob"]
+
+    table = pd.merge(table, paralog, on="helper", how="left")
+    table["paralog_prob"].fillna(0, inplace=True)
 
     # # Merge quality data
     # table = pd.merge(table, quality, left_on="transcripts", right_on="Projection_ID")
@@ -73,7 +81,8 @@ def query_table(path: str) -> pd.DataFrame:
             "relation",
             "class",
             "pred",
-            "q_gene"
+            "q_gene",
+            "paralog_prob",
             # "confidence_level",
         ]
     ]

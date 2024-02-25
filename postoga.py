@@ -28,7 +28,7 @@ from modules.ortholog_lengths import calculate_lengths
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.7.0-devel"
+__version__ = "0.8.0-devel"
 
 
 class TogaDir:
@@ -55,9 +55,11 @@ class TogaDir:
             self.by_class = args.by_class if args.by_class else None
             self.by_rel = args.by_rel if args.by_rel else None
             self.threshold = args.threshold if args.threshold else None
+            self.para_threshold = args.paralog if args.paralog else None
             self.species = args.species
             self.source = args.source
             self.phylo = args.phylo
+            self.skip = args.skip
         else:
             """The haplotype branch of postoga"""
             self.paths = args.haplotype_path.split(",")
@@ -84,9 +86,9 @@ class TogaDir:
             self.table = query_table(self.path)
             self.isoforms = isoform_writer(self.path, self.table)
 
-            if any([self.by_class, self.by_rel, self.threshold]):
+            if any([self.by_class, self.by_rel, self.threshold, self.para_threshold]):
                 self.bed, self.stats, self.ngenes, self.custom_table = filter_bed(
-                    self.path, self.table, self.by_class, self.by_rel, self.threshold
+                    self.path, self.table, self.by_class, self.by_rel, self.threshold, self.para_threshold
                 )
                 self.base_stats, _ = get_stats_from_bed(
                     os.path.join(self.path, Constants.FileNames.BED), self.table
@@ -101,33 +103,38 @@ class TogaDir:
                 self.gmodel = bed_to_gtf(self.path, self.bed, self.isoforms)
             elif self.to == "gff":
                 self.gmodel = bed_to_gff(self.path, self.bed, self.isoforms)
+            elif self.to == "bed":
+                self.gmodel = self.bed
 
-            ##### STEP 2 #####
-            self.ancestral_stats = qual_by_ancestral(
-                self.path, self.bed, self.custom_table, self.q_assembly, self.source
-            )
+            if self.skip:
+                self.log.record("skipping steps 2, 3, and 4 and only filtering the .bed file")
+            else:
+                ##### STEP 2 #####
+                self.ancestral_stats = qual_by_ancestral(
+                    self.path, self.bed, self.custom_table, self.q_assembly, self.source
+                )
 
-            ##### STEP 3 #####
-            self.ortholog_lengths = calculate_lengths(self.path, self.gmodel)
+                ##### STEP 3 #####
+                self.ortholog_lengths = calculate_lengths(self.path, self.gmodel)
 
-            ##### STEP 4 #####
+                ##### STEP 4 #####
 
-            self.completeness_stats = busco_completeness(
-                self.path, self.custom_table, self.source, self.phylo
-            )
+                self.completeness_stats = busco_completeness(
+                    self.path, self.custom_table, self.source, self.phylo
+                )
 
-            postoga_plotter(
-                self.path,
-                self.table,
-                self.ancestral_stats,
-                self.base_stats,
-                self.ngenes,
-                self.ortholog_lengths,
-                self.source,
-                self.completeness_stats,
-                self.species,
-                self.stats,
-            )
+                postoga_plotter(
+                    self.path,
+                    self.table,
+                    self.ancestral_stats,
+                    self.base_stats,
+                    self.ngenes,
+                    self.ortholog_lengths,
+                    self.source,
+                    self.completeness_stats,
+                    self.species,
+                    self.stats,
+                )
 
             self.log.close()
 
@@ -160,15 +167,15 @@ def base_branch(subparsers):
         "--threshold",
         help="Filter parameter to preserve orthology scores greater or equal to a given threshold (0.0 - 1.0)",
         required=False,
-        type=str,
+        type=float,
     )
     base_parser.add_argument(
         "-to",
         "--to",
-        help="Specify the conversion format for .bed (query_annotation/filtered) file (gtf, gff3)",
+        help="Specify the conversion format for .bed (query_annotation/filtered) file (gtf, gff3) or just keep it as .bed (bed)",
         required=True,
         type=str,
-        choices=["gtf", "gff"],
+        choices=["gtf", "gff", "bed"],
     )
     base_parser.add_argument(
         "-aq",
@@ -204,6 +211,20 @@ def base_branch(subparsers):
         choices=["mammals", "birds"],
         type=str,
         default=Constants.PHYLO_DEFAULT,
+    )
+    base_parser.add_argument(
+        "-s",
+        "--skip",
+        help="Skip steps 2, 3, and 4 and only filter the .bed file",
+        required=False,
+        action="store_true",
+    )
+    base_parser.add_argument(
+        "-par",
+        "--paralog",
+        help="Filter parameter to preserve transcripts with paralog projection probabilities less or equal to a given threshold (0.0 - 1.0)",
+        required=False,
+        type=float,
     )
 
 

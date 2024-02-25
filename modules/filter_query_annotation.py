@@ -14,12 +14,12 @@ from modules.utils import bed_reader
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.7.0-devel"
+__version__ = "0.8.0-devel"
 
 
 def filter_bed(
-    path: str, table: pd.DataFrame, by_class: list, by_rel: list, threshold: str
-) -> str:
+    path: str, table: pd.DataFrame, by_class: list, by_rel: list, threshold: float, paralog: float
+    ) -> tuple:
     """
     Filters the original .bed file to produce a custom filtered file
 
@@ -56,6 +56,12 @@ def filter_bed(
         table = table[table["relation"].isin(by_rel.split(","))]
         log.record(
             f"discarded {edge - len(table)} projections with relationships other than {by_rel}"
+        )
+    if paralog:
+        edge = len(table)
+        table = table[table["paralog_prob"] <= float(paralog)]
+        log.record(
+            f"discarded {edge - len(table)} transcripts with paralog projection probabilities >{paralog}"
         )
 
     # Read the original .bed file and filter it based on the transcripts table
