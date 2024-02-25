@@ -1,6 +1,5 @@
 ## postoga v.0.4.0-devel
 
-
 - splited main functions in ordered modules following TogaDir class layout (`filter_bed` will be improved in v.0.5.0-devel)
 - improved logging (specifies some stats about annotation or filtered annotation [if user choose to filter it]) + connect() method to call it within a module (`bed2gtf`/`bed2gff` log info bothers the structure of postoga log -> will be fixed in v.0.5.0-devel)
 - included `transcripts.quality.tsv` in query_table() and calculates some stats about it (included in logging)
@@ -9,9 +8,7 @@
 - shell is now `utils.py` (postoga base utility module)
 - added https://github.com/hillerlab/TOGA/blob/master/TOGAInput/human_hg38/Ancestral_placental.txt to `./supply/Ancestral_placental.txt` 
 
-
 ## postoga v.0.5.0-devel
-
 
 - postoga fully works now on two modes `postoga base` & `postoga haplotype`
 - base/haplo branches initiate own logs (haplo branch chooses the first path of the list provided)
@@ -21,7 +18,6 @@
 - logger.py is automatically updated with the current version
 - postoga now automates installing requirements (python/rust) through `./configure sh`
 - implemented `test.sh` to make an initial test with random data in `./supply/test`
-
 
 ## postoga v.0.6.0-devel
 
@@ -40,3 +36,10 @@
 - Introducing --phylo. Now you can choose the phylo group of your species to be use a set of BUSCO DBs. See arguments.
 - Some changes from the last PR where rolled back. This version of postoga is up to date with TOGA's output dir structure.
 - The quality of transcript is no longer considered in this release. postoga now uses orthology prediction scores as an implicit source for quality.
+
+# postoga v.0.8.0-devel
+
+- Adds `--paralog`, a new argument to preserve transcripts with paralog projections probabilities less or equal to a given threshold.
+- Implements `--skip` to only use postoga as a filtering tool, skipping additional post-processing steps.
+- Adds `bed` as an option to `--to` to avoid the conversion to gtf/gff.
+- Modifies `logger.py` to send logging information to stdout (this is also written to `postoga.log`)
