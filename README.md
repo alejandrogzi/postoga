@@ -14,21 +14,28 @@ The post-TOGA processing pipeline.
 
 ## Usage
 
-To use postoga, just do:
+To use postoga, just:
 
+Clone the repository
 ```bash
 # clone the repository
 git clone --recursive https://github.com/alejandrogzi/postoga.git
 cd postoga
+```
 
-# create an environment (recommended)
+Create a conda environment (recommended) OR set INSTALL_PYTHON in configure.sh to true
+```bash
 conda env create -f env.yml
 conda activate postoga
+```
 
-# OR call configure.sh to install dependencies
+Run configure.sh to install dependencies (Rust required)
+```bash
 ./configure.sh
+```
 
-# run a test to confirm functionality
+Run test to confirm functionality
+```bash
 ./test.sh
 ```
 
