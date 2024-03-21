@@ -113,7 +113,7 @@ class TogaDir:
             else:
                 ##### STEP 2 #####
                 self.ancestral_stats = qual_by_ancestral(
-                    self.togadir, self.bed, self.custom_table, self.q_assembly, self.source
+                    self.outdir, self.bed, self.custom_table, self.q_assembly, self.source
                 )
 
                 ##### STEP 3 #####

@@ -11,7 +11,7 @@ By default, this module calculates the assembly completeness
 based on the Ancestral_placental.txt file.
 """
 
-
+import os
 import pandas as pd
 from constants import Constants
 from logger import Log
@@ -24,16 +24,16 @@ __github__ = "https://github.com/alejandrogzi"
 __version__ = "0.7.0-devel"
 
 
-def get_classes(path: str, bed: str, table: pd.DataFrame) -> pd.DataFrame:
+def get_classes(outdir: str | os.PathLike, bed: str, table: pd.DataFrame) -> pd.DataFrame:
     """
-    @type path: str
-    @param path: path to the results directory
+    @type outdir: str | os.PathLike
+    @param outdir: path to output directory
     @type bed: str
     @param bed: path to original/filtered bed file
     @type table: pd.DataFrame
     @param table: a pandas DataFrame
     """
-    log = Log.connect(path, Constants.FileNames.LOG)
+    log = Log.connect(outdir, Constants.FileNames.LOG)
 
     # Creates a table with unique genes in the query annotation (base or filtered) and sort them based on their class
     bed = bed_reader(bed)
@@ -49,11 +49,11 @@ def get_classes(path: str, bed: str, table: pd.DataFrame) -> pd.DataFrame:
 
 
 def qual_by_ancestral(
-    path: str, bed: str, table: pd.DataFrame, assembly_qual: str, source: str
+    outdir: str | os.PathLike, bed: str, table: pd.DataFrame, assembly_qual: str, source: str
 ) -> None:
     """
-    @type path: str
-    @param path: path to the results directory
+    @type outdir: str | os.PathLike
+    @param outdir: path to output directory
     @type bed: str
     @param bed: path to original/filtered bed file
     @type table: pd.DataFrame
@@ -61,9 +61,9 @@ def qual_by_ancestral(
     @type assembly_qual: str
     @param assembly_qual: path to the ancestral placental file
     """
-    log = Log.connect(path, Constants.FileNames.LOG)
+    log = Log.connect(outdir, Constants.FileNames.LOG)
 
-    genes = get_classes(path, bed, table)
+    genes = get_classes(outdir, bed, table)
     ancestral = ancestral_reader(assembly_qual, source)
     overlap = genes[genes["t_gene"].isin(ancestral)]
 
