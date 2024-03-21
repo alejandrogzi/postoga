@@ -44,12 +44,12 @@ class TogaDir:
 
         self.mode = args.mode
         self.args = args
+        self.outdir = os.path.abspath(args.outdir)
 
         if args.mode != "haplotype":
             """The default branch of postoga"""
             ##### STEP 1 #####
             self.togadir = args.togadir
-            self.outdir = args.outdir
             self.to = args.to
             self.q_assembly = args.assembly_qual
             self.log = Log(self.outdir, Constants.FileNames.LOG)
@@ -76,6 +76,7 @@ class TogaDir:
         @param args: defined arguments
         """
 
+        os.mkdir(self.outdir) if not os.path.isdir(self.outdir) else None
         self.log.start()
         self.log.intro()
         self.log.record(f"postoga started!")
