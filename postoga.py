@@ -102,9 +102,9 @@ class TogaDir:
                 self.custom_table = self.table
 
             if self.to == "gtf":
-                self.gmodel = bed_to_gtf(self.togadir, self.bed, self.isoforms)
+                self.gmodel = bed_to_gtf(self.outdir, self.bed, self.isoforms)
             elif self.to == "gff":
-                self.gmodel = bed_to_gff(self.togadir, self.bed, self.isoforms)
+                self.gmodel = bed_to_gff(self.outdir, self.bed, self.isoforms)
             elif self.to == "bed":
                 self.gmodel = self.bed
 
