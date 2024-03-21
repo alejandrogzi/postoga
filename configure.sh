@@ -7,18 +7,7 @@
 
 
 GET_BINARIES=true
-INSTALL_PYTHON=true
-CONFIG_FILE="$HOME/.bashrc"
-
-
-add_to_config() {
-    local line="$1"
-    local file="$2"
-    if ! grep -qF "$line" "$file"; then
-        echo "$line" >> "$file"
-    fi
-}
-
+INSTALL_PYTHON=false
 
 if $INSTALL_PYTHON && [[ -f "./modules/requirements.py" ]]; then
     echo "Installing Python dependencies..."
@@ -28,32 +17,21 @@ fi
 
 if command -v cargo &> /dev/null; then
     if $GET_BINARIES; then
-        add_to_config 'export PATH="$HOME/.cargo/bin:$PATH"' "$CONFIG_FILE"
-
         echo "Installing Rust binaries..."
         cat ./modules/rust-binaries.txt | xargs -n 1 cargo install
     else
-        if [[ -f "./bed2gtf/Cargo.toml" ]] && [[ -f "./bed2gff/Cargo.toml" ]]; then
+        if [[ ! -f "./bed2gtf/Cargo.toml" ]] || [[ ! -f "./bed2gff/Cargo.toml" ]] || [[ ! -f "./noel/Cargo.toml" ]]; then
+            git submodule init bed2gtf bed2gff noel && git submodule update bed2gtf bed2gff noel
+        fi
             echo "Building bed2gtf..."
             cd ./bed2gtf && cargo build --release && cargo install --path .
 
             echo "Building bed2gff..."
             cd ../bed2gff && cargo build --release && cargo install --path .
-        else
-            echo "bed2gtf and bed2gff not found"
-            git submodule init bed2gtf bed2gff && git submodule update bed2gtf bed2gff
-            echo "Building bed2gtf..."
-            cd ./bed2gtf && cargo build --release && cargo install --path .
-            cd ../bed2gff && cargo build --release && cargo install --path .
-        fi
+
+            echo "Building noel..."
+            cd ../noel && cargo build --release && cargo install --path .
     fi
 else
-    echo "cargo not found, installing Rust...\n"
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-    source $HOME/.cargo/env
-
-    add_to_config 'export PATH="$HOME/.cargo/bin:$PATH"' "$CONFIG_FILE"
-
-    echo "Installing Rust binaries..."
-    cat ./modules/rust-binaries.txt | xargs -n 1 cargo install
+    echo "cargo not found, please install Rust"
 fi
