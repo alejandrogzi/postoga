@@ -117,7 +117,7 @@ class TogaDir:
                 )
 
                 ##### STEP 3 #####
-                self.ortholog_lengths = calculate_lengths(self.togadir, self.gmodel)
+                self.ortholog_lengths = calculate_lengths(self.outdir, self.gmodel)
 
                 ##### STEP 4 #####
 
