@@ -126,7 +126,7 @@ class TogaDir:
                 )
 
                 postoga_plotter(
-                    self.togadir,
+                    self.outdir,
                     self.table,
                     self.ancestral_stats,
                     self.base_stats,
