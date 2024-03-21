@@ -122,7 +122,7 @@ class TogaDir:
                 ##### STEP 4 #####
 
                 self.completeness_stats = busco_completeness(
-                    self.togadir, self.custom_table, self.source, self.phylo
+                    self.outdir, self.custom_table, self.source, self.phylo
                 )
 
                 postoga_plotter(

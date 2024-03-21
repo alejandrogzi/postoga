@@ -77,17 +77,17 @@ def qual_by_ancestral(
     return stats
 
 
-def overlap_busco(path: str, db: str, table: pd.DataFrame, src: str) -> float:
+def overlap_busco(outdir: str | os.PathLike, db: str, table: pd.DataFrame, src: str) -> float:
     """
-    @type db: str
-    @param db: path to the BUSCO database
+    @type outdir: str | os.PathLike
+    @param outdir: path to output directory
     @type table: pd.DataFrame
     @param table: a pandas DataFrame
     @type src: str
     @param src: source of the query annotation (ensembl, entrez, gene_name)
     """
 
-    log = Log.connect(path, Constants.FileNames.LOG)
+    log = Log.connect(outdir, Constants.FileNames.LOG)
     track = []
 
     for odb in db:
@@ -105,10 +105,10 @@ def overlap_busco(path: str, db: str, table: pd.DataFrame, src: str) -> float:
     return track
 
 
-def busco_completeness(path: str, table: pd.DataFrame, src: str, phylo: str) -> list:
+def busco_completeness(outdir: str | os.PathLike, table: pd.DataFrame, src: str, phylo: str) -> list:
     """
-    @type path: str
-    @param path: path to the results directory
+    @type outdir: str | os.PathLike
+    @param outdir: path to output directory
     @type table: pd.DataFrame
     @param table: a pandas DataFrame with the custom query table
     @type src: str
@@ -117,15 +117,15 @@ def busco_completeness(path: str, table: pd.DataFrame, src: str, phylo: str) -> 
     @param phylo: phylogenetic group of the query annotation (mammals, birds)
     """
 
-    log = Log.connect(path, Constants.FileNames.LOG)
+    log = Log.connect(outdir, Constants.FileNames.LOG)
 
     # Base functionality: compare assembly against eukaryota and vertebrata BUSCO databases
-    base = overlap_busco(path, Constants.BUSCO_DBS_BASE.values(), table, src)
+    base = overlap_busco(outdir, Constants.BUSCO_DBS_BASE.values(), table, src)
 
     if phylo == "mammals":
-        supp = overlap_busco(path, Constants.BUSCO_DBS_MAMMALS.values(), table, src)
+        supp = overlap_busco(outdir, Constants.BUSCO_DBS_MAMMALS.values(), table, src)
     elif phylo == "aves":
-        supp = overlap_busco(path, Constants.BUSCO_DBS_BIRDS.values(), table, src)
+        supp = overlap_busco(outdir, Constants.BUSCO_DBS_BIRDS.values(), table, src)
 
     stats = base + supp
     log.record(f"pseudo-BUSCO stats: {stats}")
