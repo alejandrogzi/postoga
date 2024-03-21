@@ -68,42 +68,59 @@ positional arguments:
     base            Base mode
     haplotype       Haplotype mode
 
-postoga.py base [-h] -p PATH [-bc BY_CLASS] [-br BY_REL] [-th THRESHOLD] [-par PARALOG] [-to {gtf,gff,bed}] [-aq ASSEMBLY_QUAL] [-sp {human,mouse,chicken}]
+postoga.py base [-h] --outdir OUTDIR --togadir TOGADIR [-bc BY_CLASS] [-br BY_REL]
+                       [-th THRESHOLD] -to {gtf,gff,bed} [-aq ASSEMBLY_QUAL]
+                       [-sp {human,mouse,chicken}] [-src {ensembl,gene_name,entrez}]
+                       [-phy {mammals,birds}] [-s] [-par PARALOG]
 
 optional arguments:
-  -h, --help            Show this help message and exit
-  -p PATH, --path PATH  Path to TOGA results directory (all postoga results will be send to that location)
+  -h, --help            show this help message and exit
+  --outdir OUTDIR, -o OUTDIR
+                        Path to posTOGA output directory
+  --togadir TOGADIR, --td TOGADIR
+                        Path to TOGA results directory
   -bc BY_CLASS, --by-class BY_CLASS
-                        Filter parameter to only include certain orthology classes (I, PI, UL, M, PM, L, UL), specified with commas (e.g. I,PI,UL).
+                        Filter parameter to only include certain orthology classes (I, PI, UL, M, PM,
+                        L, UL)
   -br BY_REL, --by-rel BY_REL
-                        Filter parameter to only include certain orthology relationships (o2o, o2m, m2m, m2m, o2z), specified with commas (e.g. o2o,o2m).
+                        Filter parameter to only include certain orthology relationships (o2o, o2m,
+                        m2m, m2m, o2z)
   -th THRESHOLD, --threshold THRESHOLD
-                        Filter parameter to preserve orthology scores greater or equal to a given threshold (0.0 - 1.0)
+                        Filter parameter to preserve orthology scores greater or equal to a given
+                        threshold (0.0 - 1.0)
   -to {gtf,gff,bed}, --to {gtf,gff,bed}
-                        Specify the conversion format for .bed (query_annotation/filtered) file (gtf, gff3) or just keep it as .bed (bed)
+                        Specify the conversion format for .bed (query_annotation/filtered) file (gtf,
+                        gff3) or just keep it as .bed (bed)
   -aq ASSEMBLY_QUAL, --assembly_qual ASSEMBLY_QUAL
-                        Calculate assembly quality based on a list of genes provided by the user (default: Ancestral_placental.txt)
+                        Calculate assembly quality based on a list of genes provided by the user
+                        (default: Ancestral_placental.txt)
   -sp {human,mouse,chicken}, --species {human,mouse,chicken}
-                        Species name to be used as a reference for the assembly quality calculation (default: human)
+                        Species name to be used as a reference for the assembly quality calculation
+                        (default: human)
   -src {ensembl,gene_name,entrez}, --source {ensembl,gene_name,entrez}
                         Source of the ancestral gene names (default: ENSG)
   -phy {mammals,birds}, --phylo {mammals,birds}
                         Phylogenetic group of your species (default: mammals)
   -s, --skip            Skip steps 2, 3, and 4 and only filter the .bed file
   -par PARALOG, --paralog PARALOG
-                        Filter parameter to preserve transcripts with paralog projection probabilities less or equal to a given threshold (0.0 - 1.0)
+                        Filter parameter to preserve transcripts with paralog projection probabilities
+                        less or equal to a given threshold (0.0 - 1.0)
 
-postoga.py haplotype [-h] -hp HAPLOTYPE_PATH [-r RULE] [-s {query,loss}]
+postoga.py haplotype [-h] --outdir OUTDIR -hp HAPLOTYPE_DIR [-r RULE] [-s {query,loss}]
 
 optional arguments:
-  -h, --help            Display help message
-  -hp HAPLOTYPE_PATH, --haplotype_path HAPLOTYPE_PATH
+  -h, --help            show this help message and exit
+  --outdir OUTDIR, -o OUTDIR
+                        Path to posTOGA output directory
+  -hp HAPLOTYPE_DIR, --haplotype_dir HAPLOTYPE_DIR
                         Path to TOGA results directories separated by commas (path1,path2,path3)
-  -r RULE, --rule RULE  Rule to merge haplotype assemblies (default: I>PI>UL>L>M>PM>PG>NF)
+  -r RULE, --rule RULE  Rule to merge haplotype assemblies (default: I>PI>UL>L>M>PM>PG>abs)
   -s {query,loss}, --source {query,loss}
-                        Source of the haplotype classes (default: loss)
+                        Source of the haplotype classes (query, loss)
 ```
 
+## New feature
+- Adds `--outdir` to control where postoga output goes
 
 ## What's new on version 0.8.0-devel
 
