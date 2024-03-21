@@ -90,7 +90,7 @@ class TogaDir:
 
             if any([self.by_class, self.by_rel, self.threshold, self.para_threshold]):
                 self.bed, self.stats, self.ngenes, self.custom_table = filter_bed(
-                    self.togadir, self.table, self.by_class, self.by_rel, self.threshold, self.para_threshold
+                    self.togadir, self.outdir, self.table, self.by_class, self.by_rel, self.threshold, self.para_threshold
                 )
                 self.base_stats, _ = get_stats_from_bed(
                     os.path.join(self.togadir, Constants.FileNames.BED), self.table
