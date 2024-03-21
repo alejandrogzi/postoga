@@ -86,7 +86,7 @@ class TogaDir:
 
         if self.mode != "haplotype":
             self.table = query_table(self.togadir)
-            self.isoforms = isoform_writer(self.togadir, self.table)
+            self.isoforms = isoform_writer(self.outdir, self.table)
 
             if any([self.by_class, self.by_rel, self.threshold, self.para_threshold]):
                 self.bed, self.stats, self.ngenes, self.custom_table = filter_bed(
