@@ -19,7 +19,7 @@ def shell(cmd: str) -> str:
     @type cmd: str
     @param cmd: shell command
     """
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=True)
     return result.stdout.strip()
 
 
