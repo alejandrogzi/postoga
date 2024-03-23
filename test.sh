@@ -1,14 +1,15 @@
 #!/usr/bin/env bash 
 
-LOG="./supply/test/postoga.log"
+LOG="./test_out/postoga.log"
 MODE="base"
-DIR="./supply/test"
+TESTDIR="./supply/test"
+OUTDIR="./test_out"
 
 
-if [[ -d $DIR ]]; then
-    ./postoga.py $MODE --path $DIR --to gff -th 0.5
+if [[ -d $TESTDIR ]]; then
+    ./postoga.py $MODE --td $TESTDIR -o $OUTDIR --to gff -th 0.5
 else
-    echo "Directory $DIR not found, clone the repository again or contact the developer"
+    echo "Directory $TESTDIR not found, clone the repository again or contact the developer"
 fi
 
 head -n 9 $LOG

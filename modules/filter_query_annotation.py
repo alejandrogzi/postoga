@@ -18,13 +18,15 @@ __version__ = "0.8.0-devel"
 
 
 def filter_bed(
-    path: str, table: pd.DataFrame, by_class: list, by_rel: list, threshold: float, paralog: float
+    togadir: str | os.PathLike, outdir: str | os.PathLike, table: pd.DataFrame, by_class: list, by_rel: list, threshold: float, paralog: float
     ) -> tuple:
     """
     Filters the original .bed file to produce a custom filtered file
 
-    @type path: str
-    @param path: path to the results directory
+    @type togadir: str | os.PathLike
+    @param togadir: path to output directory
+    @type outdir: str | os.PathLike
+    @param outdir: path to output directory
     @type table: pd.DataFrame
     @param table: query table
     @type by_class: list
@@ -35,7 +37,7 @@ def filter_bed(
     @param threshold: orthology score threshold
     """
 
-    log = Log.connect(path, Constants.FileNames.LOG)
+    log = Log.connect(outdir, Constants.FileNames.LOG)
     initial = len(table)
 
     if threshold:
@@ -66,13 +68,13 @@ def filter_bed(
 
     # Read the original .bed file and filter it based on the transcripts table
     bed = pd.read_csv(
-        os.path.join(path, Constants.FileNames.BED), sep="\t", header=None
+        os.path.join(togadir, Constants.FileNames.BED), sep="\t", header=None
     )
     bed = bed[bed[3].isin(table["transcripts"])]
     custom_table = table[table["transcripts"].isin(bed[3])]
 
     # Write the filtered .bed file
-    f = os.path.join(path, Constants.FileNames.FILTERED_BED)
+    f = os.path.join(outdir, Constants.FileNames.FILTERED_BED)
     bed.to_csv(
         f,
         sep="\t",

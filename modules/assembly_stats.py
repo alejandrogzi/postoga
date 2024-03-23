@@ -11,7 +11,7 @@ By default, this module calculates the assembly completeness
 based on the Ancestral_placental.txt file.
 """
 
-
+import os
 import pandas as pd
 from constants import Constants
 from logger import Log
@@ -24,16 +24,16 @@ __github__ = "https://github.com/alejandrogzi"
 __version__ = "0.7.0-devel"
 
 
-def get_classes(path: str, bed: str, table: pd.DataFrame) -> pd.DataFrame:
+def get_classes(outdir: str | os.PathLike, bed: str, table: pd.DataFrame) -> pd.DataFrame:
     """
-    @type path: str
-    @param path: path to the results directory
+    @type outdir: str | os.PathLike
+    @param outdir: path to output directory
     @type bed: str
     @param bed: path to original/filtered bed file
     @type table: pd.DataFrame
     @param table: a pandas DataFrame
     """
-    log = Log.connect(path, Constants.FileNames.LOG)
+    log = Log.connect(outdir, Constants.FileNames.LOG)
 
     # Creates a table with unique genes in the query annotation (base or filtered) and sort them based on their class
     bed = bed_reader(bed)
@@ -49,11 +49,11 @@ def get_classes(path: str, bed: str, table: pd.DataFrame) -> pd.DataFrame:
 
 
 def qual_by_ancestral(
-    path: str, bed: str, table: pd.DataFrame, assembly_qual: str, source: str
+    outdir: str | os.PathLike, bed: str, table: pd.DataFrame, assembly_qual: str, source: str
 ) -> None:
     """
-    @type path: str
-    @param path: path to the results directory
+    @type outdir: str | os.PathLike
+    @param outdir: path to output directory
     @type bed: str
     @param bed: path to original/filtered bed file
     @type table: pd.DataFrame
@@ -61,9 +61,9 @@ def qual_by_ancestral(
     @type assembly_qual: str
     @param assembly_qual: path to the ancestral placental file
     """
-    log = Log.connect(path, Constants.FileNames.LOG)
+    log = Log.connect(outdir, Constants.FileNames.LOG)
 
-    genes = get_classes(path, bed, table)
+    genes = get_classes(outdir, bed, table)
     ancestral = ancestral_reader(assembly_qual, source)
     overlap = genes[genes["t_gene"].isin(ancestral)]
 
@@ -77,17 +77,17 @@ def qual_by_ancestral(
     return stats
 
 
-def overlap_busco(path: str, db: str, table: pd.DataFrame, src: str) -> float:
+def overlap_busco(outdir: str | os.PathLike, db: str, table: pd.DataFrame, src: str) -> float:
     """
-    @type db: str
-    @param db: path to the BUSCO database
+    @type outdir: str | os.PathLike
+    @param outdir: path to output directory
     @type table: pd.DataFrame
     @param table: a pandas DataFrame
     @type src: str
     @param src: source of the query annotation (ensembl, entrez, gene_name)
     """
 
-    log = Log.connect(path, Constants.FileNames.LOG)
+    log = Log.connect(outdir, Constants.FileNames.LOG)
     track = []
 
     for odb in db:
@@ -105,10 +105,10 @@ def overlap_busco(path: str, db: str, table: pd.DataFrame, src: str) -> float:
     return track
 
 
-def busco_completeness(path: str, table: pd.DataFrame, src: str, phylo: str) -> list:
+def busco_completeness(outdir: str | os.PathLike, table: pd.DataFrame, src: str, phylo: str) -> list:
     """
-    @type path: str
-    @param path: path to the results directory
+    @type outdir: str | os.PathLike
+    @param outdir: path to output directory
     @type table: pd.DataFrame
     @param table: a pandas DataFrame with the custom query table
     @type src: str
@@ -117,15 +117,15 @@ def busco_completeness(path: str, table: pd.DataFrame, src: str, phylo: str) -> 
     @param phylo: phylogenetic group of the query annotation (mammals, birds)
     """
 
-    log = Log.connect(path, Constants.FileNames.LOG)
+    log = Log.connect(outdir, Constants.FileNames.LOG)
 
     # Base functionality: compare assembly against eukaryota and vertebrata BUSCO databases
-    base = overlap_busco(path, Constants.BUSCO_DBS_BASE.values(), table, src)
+    base = overlap_busco(outdir, Constants.BUSCO_DBS_BASE.values(), table, src)
 
     if phylo == "mammals":
-        supp = overlap_busco(path, Constants.BUSCO_DBS_MAMMALS.values(), table, src)
+        supp = overlap_busco(outdir, Constants.BUSCO_DBS_MAMMALS.values(), table, src)
     elif phylo == "aves":
-        supp = overlap_busco(path, Constants.BUSCO_DBS_BIRDS.values(), table, src)
+        supp = overlap_busco(outdir, Constants.BUSCO_DBS_BIRDS.values(), table, src)
 
     stats = base + supp
     log.record(f"pseudo-BUSCO stats: {stats}")

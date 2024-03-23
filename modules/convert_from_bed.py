@@ -4,6 +4,7 @@
 """ A module to convert .bed files to .gtf and .gff files. """
 
 
+import os
 from constants import Constants
 from logger import Log
 from modules.utils import shell
@@ -15,21 +16,21 @@ __github__ = "https://github.com/alejandrogzi"
 __version__ = "0.6.0-devel"
 
 
-def bed_to_gtf(path: str, bed: str, isoforms: str) -> str:
+def bed_to_gtf(outdir: str | os.PathLike, bed: str, isoforms: str) -> str:
     """
     Converts a .bed file to .gtf
 
-    @type path: str
-    @param path: path to the results directory
+    @type outdir: str | os.PathLike,
+    @param outdir: path to the output directory
     @type bed: str
     @param bed: path to .bed file
     @type isoforms: str
     @param isoforms: path to the isoforms file
     """
 
-    log = Log.connect(path, Constants.FileNames.LOG)
+    log = Log.connect(outdir, Constants.FileNames.LOG)
 
-    gtf = f"{bed.split('.bed')[0]}.gtf"
+    gtf = os.path.join(outdir, f"{os.path.splitext(os.path.basename(bed))[0]}.gtf")
     cmd = f"{Constants.ToolNames.BED2GTF} --bed {bed} --isoforms {isoforms} --output {gtf}"
     sh = shell(cmd)
 
@@ -44,21 +45,21 @@ def bed_to_gtf(path: str, bed: str, isoforms: str) -> str:
     return gtf
 
 
-def bed_to_gff(path: str, bed: str, isoforms: str) -> str:
+def bed_to_gff(outdir: str | os.PathLike, bed: str, isoforms: str) -> str:
     """
     Converts a .bed file to .gff
 
-    @type path: str
-    @param path: path to the results directory
+    @type outdir: str | os.PathLike,
+    @param outdir: path to the output directory
     @type bed: str
     @param bed: path to .bed file
     @type isoforms: str
     @param isoforms: path to the isoforms file
     """
 
-    log = Log.connect(path, Constants.FileNames.LOG)
+    log = Log.connect(outdir, Constants.FileNames.LOG)
 
-    gff = f"{bed.split('.bed')[0]}.gff"
+    gff = os.path.join(outdir, f"{os.path.splitext(os.path.basename(bed))[0]}.gff")
     cmd = f"{Constants.ToolNames.BED2GFF} --bed {bed} --isoforms {isoforms} --output {gff}"
     sh = shell(cmd)
 

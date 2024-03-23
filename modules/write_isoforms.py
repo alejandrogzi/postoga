@@ -17,19 +17,19 @@ __github__ = "https://github.com/alejandrogzi"
 __version__ = "0.7.0-devel"
 
 
-def isoform_writer(path: str, table: pd.DataFrame) -> str:
+def isoform_writer(outdir: str | os.PathLike, table: pd.DataFrame) -> str:
     """
     Writes all isoforms to a text file
 
-    @type path: str
-    @param path: path to the results directory
+    @type outdir: str | os.PathLike
+    @param outdir: path to output directory
     @type table: pd.DataFrame
     @param table: query table
     """
 
-    log = Log.connect(path, Constants.FileNames.LOG)
+    log = Log.connect(outdir, Constants.FileNames.LOG)
 
-    f = os.path.join(path, Constants.FileNames.OWNED_ISOFORMS)
+    f = os.path.join(outdir, Constants.FileNames.OWNED_ISOFORMS)
 
     # Get only gene:transcript pairs
     table = table.iloc[:, [0, 2]]

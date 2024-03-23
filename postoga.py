@@ -44,14 +44,15 @@ class TogaDir:
 
         self.mode = args.mode
         self.args = args
+        self.outdir = os.path.abspath(args.outdir)
 
         if args.mode != "haplotype":
             """The default branch of postoga"""
             ##### STEP 1 #####
-            self.path = args.path
+            self.togadir = args.togadir
             self.to = args.to
             self.q_assembly = args.assembly_qual
-            self.log = Log(args.path, Constants.FileNames.LOG)
+            self.log = Log(self.outdir, Constants.FileNames.LOG)
             self.by_class = args.by_class if args.by_class else None
             self.by_rel = args.by_rel if args.by_rel else None
             self.threshold = args.threshold if args.threshold else None
@@ -62,10 +63,10 @@ class TogaDir:
             self.skip = args.skip
         else:
             """The haplotype branch of postoga"""
-            self.paths = args.haplotype_path.split(",")
+            self.togadirs = args.haplotype_path.split(",")
             self.rule = args.rule.split(">")
             self.source = args.source
-            self.log = Log(self.paths[0], Constants.FileNames.LOG)
+            self.log = Log(self.outdir, Constants.FileNames.LOG)
 
     def run(self) -> None:
         """
@@ -75,6 +76,7 @@ class TogaDir:
         @param args: defined arguments
         """
 
+        os.mkdir(self.outdir) if not os.path.isdir(self.outdir) else None
         self.log.start()
         self.log.intro()
         self.log.record(f"postoga started!")
@@ -83,26 +85,26 @@ class TogaDir:
         )
 
         if self.mode != "haplotype":
-            self.table = query_table(self.path)
-            self.isoforms = isoform_writer(self.path, self.table)
+            self.table = query_table(self.togadir)
+            self.isoforms = isoform_writer(self.outdir, self.table)
 
             if any([self.by_class, self.by_rel, self.threshold, self.para_threshold]):
                 self.bed, self.stats, self.ngenes, self.custom_table = filter_bed(
-                    self.path, self.table, self.by_class, self.by_rel, self.threshold, self.para_threshold
+                    self.togadir, self.outdir, self.table, self.by_class, self.by_rel, self.threshold, self.para_threshold
                 )
                 self.base_stats, _ = get_stats_from_bed(
-                    os.path.join(self.path, Constants.FileNames.BED), self.table
+                    os.path.join(self.togadir, Constants.FileNames.BED), self.table
                 )
             else:
-                self.bed = os.path.join(self.path, Constants.FileNames.BED)
+                self.bed = os.path.join(self.togadir, Constants.FileNames.BED)
                 self.base_stats, self.ngenes = get_stats_from_bed(self.bed, self.table)
                 self.stats = None
                 self.custom_table = self.table
 
             if self.to == "gtf":
-                self.gmodel = bed_to_gtf(self.path, self.bed, self.isoforms)
+                self.gmodel = bed_to_gtf(self.outdir, self.bed, self.isoforms)
             elif self.to == "gff":
-                self.gmodel = bed_to_gff(self.path, self.bed, self.isoforms)
+                self.gmodel = bed_to_gff(self.outdir, self.bed, self.isoforms)
             elif self.to == "bed":
                 self.gmodel = self.bed
 
@@ -111,20 +113,20 @@ class TogaDir:
             else:
                 ##### STEP 2 #####
                 self.ancestral_stats = qual_by_ancestral(
-                    self.path, self.bed, self.custom_table, self.q_assembly, self.source
+                    self.outdir, self.bed, self.custom_table, self.q_assembly, self.source
                 )
 
                 ##### STEP 3 #####
-                self.ortholog_lengths = calculate_lengths(self.path, self.gmodel)
+                self.ortholog_lengths = calculate_lengths(self.outdir, self.gmodel)
 
                 ##### STEP 4 #####
 
                 self.completeness_stats = busco_completeness(
-                    self.path, self.custom_table, self.source, self.phylo
+                    self.outdir, self.custom_table, self.source, self.phylo
                 )
 
                 postoga_plotter(
-                    self.path,
+                    self.outdir,
                     self.table,
                     self.ancestral_stats,
                     self.base_stats,
@@ -139,14 +141,16 @@ class TogaDir:
             self.log.close()
 
         else:
-            hap_classes = merge_haplotypes(self.paths, self.source, self.rule)
+            hap_classes = merge_haplotypes(self.togadirs, self.source, self.rule)
             self.log.close()
 
 
-def base_branch(subparsers):
-    base_parser = subparsers.add_parser("base", help="Base mode")
+def base_branch(subparsers, parent_parser):
+    base_parser = subparsers.add_parser("base", help="Base mode", parents = [parent_parser])
     base_parser.add_argument(
-        "-p", "--path", help="Path to TOGA results directory", required=True, type=str
+        "--togadir",
+        "--td", 
+        help="Path to TOGA results directory", required=True, type=str
     )
     base_parser.add_argument(
         "-bc",
@@ -228,11 +232,11 @@ def base_branch(subparsers):
     )
 
 
-def haplotype_branch(subparsers):
-    haplotype_parser = subparsers.add_parser("haplotype", help="Haplotype mode")
+def haplotype_branch(subparsers, parent_parser):
+    haplotype_parser = subparsers.add_parser("haplotype", help="Haplotype mode", parents = [parent_parser])
     haplotype_parser.add_argument(
         "-hp",
-        "--haplotype_path",
+        "--haplotype_dir",
         help="Path to TOGA results directories separated by commas (path1,path2,path3)",
         required=True,
         type=str,
@@ -259,10 +263,21 @@ def haplotype_branch(subparsers):
 def parser():
     """Argument parser for postoga"""
     app = argparse.ArgumentParser()
+    parent_parser = argparse.ArgumentParser(add_help=False)
+    parent_parser.add_argument(
+        "--outdir",
+        "-o",
+        help="Path to posTOGA output directory",
+        required=True,
+        type=str
+    )
+
+
     subparsers = app.add_subparsers(dest="mode", help="Select mode")
 
-    base_branch(subparsers)
-    haplotype_branch(subparsers)
+
+    base_branch(subparsers, parent_parser)
+    haplotype_branch(subparsers, parent_parser)
 
     if len(sys.argv) < 2:
         app.print_help()
