@@ -63,11 +63,11 @@ def query_table(path: str) -> pd.DataFrame:
     table["relation"] = table["orthology_class"].map(Constants.ORTHOLOGY_TYPE)
     table["t_gene"].fillna(table["helper"].map(isoforms_dict), inplace=True)
 
-    # Add paralog probabilities -> disabled for now 
-    # paralog = pd.merge(score, paralogs, on="transcripts").groupby("gene").agg({"pred": "max"}).reset_index()
-    # paralog.columns = ["helper", "paralog_prob"]
-    # table = pd.merge(table, paralog, on="helper", how="left")
-    # table["paralog_prob"].fillna(0, inplace=True)
+    # Add paralog probabilities
+    paralog = pd.merge(score, paralogs, on="transcripts").groupby("gene").agg({"pred": "max"}).reset_index()
+    paralog.columns = ["helper", "paralog_prob"]
+    table = pd.merge(table, paralog, on="helper", how="left")
+    table["paralog_prob"].fillna(0, inplace=True)
 
     # # Merge quality data
     # table = pd.merge(table, quality, left_on="transcripts", right_on="Projection_ID")
