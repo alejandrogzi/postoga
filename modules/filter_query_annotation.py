@@ -61,9 +61,9 @@ def filter_bed(
         )
     if paralog:
         edge = len(table)
-        table = table[table["paralog_prob"] <= float(paralog)]
+        table = table.groupby('helper').filter(lambda x: (x['pred'] > float(paralog)).sum() <= 1)
         log.record(
-            f"discarded {edge - len(table)} transcripts with paralog projection probabilities >{paralog}"
+            f"discarded {edge - len(table)} transcripts with more than 1 chain with orthology probs >{paralog}"
         )
 
     # Read the original .bed file and filter it based on the transcripts table
