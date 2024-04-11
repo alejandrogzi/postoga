@@ -43,3 +43,9 @@
 - Implements `--skip` to only use postoga as a filtering tool, skipping additional post-processing steps.
 - Adds `bed` as an option to `--to` to avoid the conversion to gtf/gff.
 - Modifies `logger.py` to send logging information to stdout (this is also written to `postoga.log`)
+
+# postoga 0.9.0-devel
+
+- Adds `--outdir` to control where postoga output goes.
+- Adds `--isoforms` to allow the user specify external isoform tables.
+- Disables git features from `logger.py` [branch/commit] info.
