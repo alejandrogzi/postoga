@@ -11,6 +11,12 @@ The post-[TOGA](https://github.com/hillerlab/TOGA) processing pipeline.
 
 <!-- <img src="./supply/postoga_report.png" align="center"/> -->
 
+> ## What's new on version 0.9.0-devel
+>
+> - Adds `--outdir` to control where postoga output goes.
+> - Adds `--isoforms` to allow the user specify external isoform tables.
+> - Disables git features from `logger.py` [branch/commit] info.
+> - Changes a small portion of `filter_query_annotation.py` && `make_query_table.py` to fix the `--paralog` flag and allow a broader inclusion of isoforms.   
 
 ## Usage
 
@@ -121,8 +127,4 @@ optional arguments:
                         Source of the haplotype classes (query, loss)
 ```
 
-## What's new on version 0.9.0-devel
-- Adds `--outdir` to control where postoga output goes.
-- Adds `--isoforms` to allow the user specify external isoform tables.
-- Disables git features from `logger.py` [branch/commit] info.
-- Changes a small portion of `filter_query_annotation.py` && `make_query_table.py` to fix the `--paralog` flag and allow a broader inclusion of isoforms.   
+
