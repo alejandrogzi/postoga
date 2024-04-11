@@ -1,9 +1,9 @@
 # postoga
 
-The post-TOGA processing pipeline.
+The post-[TOGA](https://github.com/hillerlab/TOGA) processing pipeline.
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-![version](https://img.shields.io/badge/version-0.8.0--devel-orange)
+![version](https://img.shields.io/badge/version-0.9.0--devel-orange)
 
 <p align="center">
     <img width=700 align="center" src="./supply/postoga_logo_git.png" >
@@ -105,6 +105,8 @@ optional arguments:
   -par PARALOG, --paralog PARALOG
                         Filter parameter to preserve transcripts with paralog projection probabilities
                         less or equal to a given threshold (0.0 - 1.0)
+  -iso ISOFORMS, --isoforms ISOFORMS
+                        Path to a custom isoform table (default: None)
 
 postoga.py haplotype [-h] --outdir OUTDIR -hp HAPLOTYPE_DIR [-r RULE] [-s {query,loss}]
 
@@ -119,13 +121,8 @@ optional arguments:
                         Source of the haplotype classes (query, loss)
 ```
 
-## New feature
-- Adds `--outdir` to control where postoga output goes
-
-## What's new on version 0.8.0-devel
-
-- Adds `--paralog`, a new argument to preserve transcripts with paralog projections probabilities less or equal to a given threshold.
-- Implements `--skip` to only use postoga as a filtering tool, skipping additional post-processing steps.
-- Adds `bed` as an option to `--to` to avoid the conversion to gtf/gff.
-- Modifies `logger.py` to send logging information to stdout (this is also written to `postoga.log`)
-
+## What's new on version 0.9.0-devel
+- Adds `--outdir` to control where postoga output goes.
+- Adds `--isoforms` to allow the user specify external isoform tables.
+- Disables git features from `logger.py` [branch/commit] info.
+- Changes a small portion of `filter_query_annotation.py` && `make_query_table.py` to fix the `--paralog` flag and allow a broader inclusion of isoforms.   
