@@ -70,7 +70,7 @@ class Version:
         return self.version_repr
 
 
-__version__ = Version(0, 8, 0, dev=True)
+__version__ = Version(0, 9, 0, dev=True)
 
 if __name__ == "__main__":
     print(f"postoga v.{__version__}")
