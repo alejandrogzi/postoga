@@ -28,7 +28,7 @@ from modules.ortholog_lengths import calculate_lengths
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.8.0-devel"
+__version__ = "0.9.0-devel"
 
 
 class TogaDir:
@@ -61,6 +61,7 @@ class TogaDir:
             self.source = args.source
             self.phylo = args.phylo
             self.skip = args.skip
+            self.isoforms = args.isoforms
         else:
             """The haplotype branch of postoga"""
             self.togadirs = args.haplotype_path.split(",")
@@ -86,7 +87,8 @@ class TogaDir:
 
         if self.mode != "haplotype":
             self.table = query_table(self.togadir)
-            self.isoforms = isoform_writer(self.outdir, self.table)
+            if not self.isoforms:
+                self.isoforms = isoform_writer(self.outdir, self.table)
 
             if any([self.by_class, self.by_rel, self.threshold, self.para_threshold]):
                 self.bed, self.stats, self.ngenes, self.custom_table = filter_bed(
@@ -230,6 +232,14 @@ def base_branch(subparsers, parent_parser):
         required=False,
         type=float,
     )
+    base_parser.add_argument(
+        "-iso",
+        "--isoforms",
+        help="Path to a custom isoform table (default: None)",
+        required=False,
+        default=None,
+        type=str,
+    )
 
 
 def haplotype_branch(subparsers, parent_parser):
@@ -264,6 +274,7 @@ def parser():
     """Argument parser for postoga"""
     app = argparse.ArgumentParser()
     parent_parser = argparse.ArgumentParser(add_help=False)
+ 
     parent_parser.add_argument(
         "--outdir",
         "-o",
@@ -271,10 +282,8 @@ def parser():
         required=True,
         type=str
     )
-
-
+ 
     subparsers = app.add_subparsers(dest="mode", help="Select mode")
-
 
     base_branch(subparsers, parent_parser)
     haplotype_branch(subparsers, parent_parser)
