@@ -89,6 +89,8 @@ class TogaDir:
             self.table = query_table(self.togadir)
             if not self.isoforms:
                 self.isoforms = isoform_writer(self.outdir, self.table)
+            else:
+                self.log.record(f"using custom isoform table provided by the user: {self.isoforms}")
 
             if any([self.by_class, self.by_rel, self.threshold, self.para_threshold]):
                 self.bed, self.stats, self.ngenes, self.custom_table = filter_bed(
