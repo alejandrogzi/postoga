@@ -23,7 +23,7 @@ except ImportError:
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.8.0-devel"
+__version__ = "0.9.0-devel"
 __credits__ = ["Bogdan Kirilenko"]
 
 
@@ -168,7 +168,7 @@ class Constants:
         PROTEIN = "prot.fasta"
         ISOFORMS = os.path.join("temp", "isoforms.tsv")
         PARALOGS = os.path.join("temp", "paralogs.txt")
-        OWNED_ISOFORMS = "POSTOGA_isoforms.txt"
+        OWNED_ISOFORMS = "postoga_isoforms.txt"
         FILTERED_BED = "filtered.bed"
         GTF = f"{BED.split('.')[0]}.gtf"
         GFF = f"{BED.split('.')[0]}.gff"
