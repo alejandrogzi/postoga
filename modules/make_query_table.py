@@ -37,8 +37,12 @@ def query_table(path: str) -> pd.DataFrame:
     isoforms = pd.read_csv(
         os.path.join(path, Constants.FileNames.ISOFORMS), sep="\t", header=None
     )
-    paralogs = pd.read_csv(os.path.join(path, Constants.FileNames.PARALOGS), sep="\t", header=None, names=["transcripts"])
-    # quality = pd.read_csv(os.path.join(path, Constants.FileNames.QUALITY), sep="\t")
+    paralogs = pd.read_csv(
+        os.path.join(path, Constants.FileNames.PARALOGS),
+        sep="\t",
+        header=None,
+        names=["transcripts"],
+    )
 
     # Creates a dictionary: transcript -> gene
     isoforms_dict = isoforms.set_index(1).to_dict().get(0)
@@ -54,10 +58,12 @@ def query_table(path: str) -> pd.DataFrame:
     ortho_x_loss["helper"].fillna(ortho_x_loss["t_gene"], inplace=True)
 
     # Merge transcript names (under the column "gene") and chain IDs (under the column "chain")
-    score["transcripts"] = [f"{k}.{v}" for k,v in zip(score["gene"], score["chain"])]
+    score["transcripts"] = [f"{k}.{v}" for k, v in zip(score["gene"], score["chain"])]
     score = score[["transcripts", "pred", "gene"]]
 
-    table = pd.merge(ortho_x_loss, score, left_on="transcript", right_on="transcripts", how="outer")
+    table = pd.merge(
+        ortho_x_loss, score, left_on="transcript", right_on="transcripts", how="outer"
+    )
     table["helper"].fillna(table["gene"], inplace=True)
 
     # Create a new column with a rename orthology relationship
@@ -66,10 +72,32 @@ def query_table(path: str) -> pd.DataFrame:
     table["transcripts"].fillna(table["transcript"], inplace=True)
 
     # Add paralog probabilities
-    paralog = pd.merge(score, paralogs, on="transcripts").groupby("gene").agg({"pred": "max"}).reset_index()
+    paralog = (
+        pd.merge(score, paralogs, on="transcripts")
+        .groupby("gene")
+        .agg({"pred": "max"})
+        .reset_index()
+    )
     paralog.columns = ["helper", "paralog_prob"]
     table = pd.merge(table, paralog, on="helper", how="left")
     table["paralog_prob"].fillna(0, inplace=True)
+
+    # Calculates median prediction values for joined fragments
+    table["chain"] = [
+        1 if x.split(".")[-1] == "-1" and y != "-" else 0
+        for x, y in zip(table["transcripts"].fillna("-"), table["q_gene"].fillna("-"))
+    ]
+    medians = (
+        table[(table["chain"] != 1) & (table["pred"] >= 0) & (table["q_gene"].isna())]
+        .groupby("helper")
+        .apply(get_median)
+        .reset_index(name="npred")
+    )
+    table.loc[table["chain"] == 1, "pred"] = (
+        table[table["chain"] == 1]
+        .merge(medians, on="helper", how="left")["npred"]
+        .to_list()
+    )
 
     table = table[
         [
@@ -81,15 +109,21 @@ def query_table(path: str) -> pd.DataFrame:
             "pred",
             "q_gene",
             "paralog_prob",
+            "chain"
         ]
     ]
 
     info = [
         f"found {len(table)} projections, {len(table['helper'].unique())} unique transcripts, {len(table['t_gene'].unique())} unique genes",
         f"class stats: {table['class'].value_counts().to_dict()}",
-        f"relation stats: {table['relation'].value_counts().to_dict()}"
+        f"relation stats: {table['relation'].value_counts().to_dict()}",
+        f"joined fragments predictions: {len(table[table['chain'] == 1])}",
     ]
 
     [log.record(i) for i in info]
 
     return table
+
+
+def get_median(group):
+    return group.loc[:, "pred"].median()
