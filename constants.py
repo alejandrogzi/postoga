@@ -166,8 +166,8 @@ class Constants:
         BED = "query_annotation.bed"
         CODON = "codon.fasta"
         PROTEIN = "prot.fasta"
-        ISOFORMS = os.path.join("temp", "isoforms.tsv")
-        PARALOGS = os.path.join("temp", "paralogs.txt")
+        ISOFORMS = "isoforms.tsv"
+        PARALOGS = "paralogs.txt"
         OWNED_ISOFORMS = "postoga_isoforms.txt"
         FILTERED_BED = "filtered.bed"
         GTF = f"{BED.split('.')[0]}.gtf"
@@ -176,7 +176,7 @@ class Constants:
         FILTERED_GFF = f"{FILTERED_BED.split('.')[0]}.gff"
         NUCLEOTIDE = "nucleotide.fasta"
         CLASS = "loss_summ_data.tsv"
-        SCORES = "orthology_scores.tsv" #os.path.join("temp", "orthology_scores.tsv")
+        SCORES = "orthology_scores.tsv" 
         LOG = "postoga.log"
         QUALITY = os.path.join("temp", "transcript_quality.tsv")
         ANCESTRAL = SUPPLY_FOLDER.joinpath(

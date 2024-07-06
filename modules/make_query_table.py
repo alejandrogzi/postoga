@@ -33,12 +33,14 @@ def query_table(path: str) -> pd.DataFrame:
         header=None,
         names=["projection", "transcript", "class"],
     )
-    score = pd.read_csv(os.path.join(path, Constants.FileNames.SCORES), sep="\t")
-    isoforms = pd.read_csv(
-        os.path.join(path, Constants.FileNames.ISOFORMS), sep="\t", header=None
+
+    score = safe_read_csv(path, Constants.FileNames.SCORES, sep="\t")
+    isoforms = safe_read_csv(
+        path, Constants.FileNames.ISOFORMS, sep="\t", header=None
     )
-    paralogs = pd.read_csv(
-        os.path.join(path, Constants.FileNames.PARALOGS),
+    paralogs = safe_read_csv(
+        path, 
+        Constants.FileNames.PARALOGS,
         sep="\t",
         header=None,
         names=["transcripts"],
@@ -127,3 +129,10 @@ def query_table(path: str) -> pd.DataFrame:
 
 def get_median(group):
     return group.loc[:, "pred"].median()
+
+
+def safe_read_csv(path: str, filename: str, **kwargs) -> pd.DataFrame:
+    try:
+        return pd.read_csv(os.path.join(path, filename), **kwargs)
+    except FileNotFoundError:
+        return pd.read_csv(os.path.join(path, "temp", filename), **kwargs)
