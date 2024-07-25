@@ -1,9 +1,14 @@
+> [!NOTE]
+>
+> postoga is dependent from [TOGA](https://github.com/hillerlab/TOGA). Any changes in TOGA will have a repercusion here. If you found any bug/errors, please report them here.
+> This project is in constant development, any desired features are welcome!
+
+
 # postoga
 
 The post-[TOGA](https://github.com/hillerlab/TOGA) processing pipeline.
 
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-![version](https://img.shields.io/badge/version-0.9.0--devel-orange)
+![version](https://img.shields.io/badge/version-0.9.2--devel-orange)
 
 <p align="center">
     <img width=700 align="center" src="./supply/postoga_logo_git.png" >
@@ -11,12 +16,10 @@ The post-[TOGA](https://github.com/hillerlab/TOGA) processing pipeline.
 
 <!-- <img src="./supply/postoga_report.png" align="center"/> -->
 
-> ## What's new on version 0.9.0-devel
+> ## What's new on version 0.9.2-devel
 >
-> - Adds `--outdir` to control where postoga output goes.
-> - Adds `--isoforms` to allow the user specify external isoform tables.
-> - Disables git features from `logger.py` [branch/commit] info.
-> - Changes a small portion of `filter_query_annotation.py` && `make_query_table.py` to fix the `--paralog` flag and allow a broader inclusion of isoforms.   
+> - CI workflow + testing
+> - Enhanced env creation (using hatch)
 
 ## Usage
 
@@ -29,20 +32,15 @@ git clone --recursive https://github.com/alejandrogzi/postoga.git
 cd postoga
 ```
 
-Create a conda environment (recommended) OR set INSTALL_PYTHON in configure.sh to true
+Activate the environment and configure binaries
 ```bash
-conda env create -f env.yml
-conda activate postoga
-```
-
-Run configure.sh to install dependencies (Rust required)
-```bash
-./configure.sh
+pip install hatch && hatch shell
+hatch run configure
 ```
 
 Run test to confirm functionality
 ```bash
-./test.sh
+hatch run test
 ```
 
 If you see something like this at then end, postoga is ready!:
@@ -59,12 +57,22 @@ branch: master
 [XXXXXX] - INFO: found 10 projections, 10 unique transcripts, 10 unique genes
 ```
 
-> [!NOTE]
->
-> postoga is dependent from TOGA. Any changes in TOGA will have a repercusion here. If you found any bug/errors, please report them here.
-> This project is in constant development, any desired features are welcome!
-
 Here is a descrption of postoga features:
+
+> [!TIP]
+>
+> If the only thing you want to do is apply some filters to a TOGA result or convert results to GTF/GFF files, I recommend the following command:
+>
+> ```
+> ./postoga.py base \
+> --togadir /your/TOGA/dir \
+> --outdir /your/out/dir \ 
+> -bc [YOUR CLASSES] \
+> -br [YOUR RELATIONS] \
+> -th [YOUR THRESHOLD] \
+> -to [YOUR FORMAT GTF/GFF/BED] \
+> --skip
+> ```
 
 ```text
 usage: postoga.py [-h] {base,haplotype}
