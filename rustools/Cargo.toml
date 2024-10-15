@@ -1,0 +1,15 @@
+[package]
+name = "rustools"
+version = "0.0.1"
+edition = "2021"
+
+[lib]
+name = "rustools"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = "0.22.0"
+rayon = "1.5.1"
+num_cpus = "1.14.0"
+natord = "1.0.9"
+flate2 = "1.0.20"
