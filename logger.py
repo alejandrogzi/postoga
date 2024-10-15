@@ -34,7 +34,6 @@ This class have been included in postoga
 to better manage the logging of the tool.
 """
 
-
 import os
 import datetime
 from constants import Constants
@@ -45,7 +44,7 @@ import logging
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.9.0-devel"
+__version__ = "0.9.3-devel"
 
 
 class Log:
@@ -54,8 +53,6 @@ class Log:
     def __init__(self, path: str, log_file: str):
         self.log_file = os.path.join(path, log_file)
         self.version = __version__
-        # self.commit = shell(Constants.Commands.COMMIT)
-        # self.branch = shell(Constants.Commands.BRANCH)
 
     def start(self):
         logging.basicConfig(
@@ -66,17 +63,13 @@ class Log:
         )
 
     def intro(self):
-        start_message = f"{'#'*36}\npostoga: the post-TOGA processing pipeline"
-        version = f"version: {self.version}"
-        # commit = f"commit: {self.commit}"
-        # branch = f"branch: {self.branch}\n\n"
-        # metadata = "\n".join([version, commit, branch])
-        metadata = "\n".join([version])
+        start_message = "\n> postoga: the post-TOGA processing pipeline"
+        version = f"> version: {self.version}"
 
         with open(self.log_file, "w") as log:
-            log.write("\n".join([start_message, metadata]))
+            log.write("\n".join([start_message, version]))
 
-        print(start_message + "\n" + metadata)
+        print(start_message + "\n" + version + "\n\n")
 
     def record(self, message, timestamp=True):
         logging.info(message)
@@ -90,7 +83,7 @@ class Log:
         return log
 
     def close(self):
-        end_message = f"postoga finished!\n{'#'*36}"
+        end_message = f"> postoga finished!\n"
         logging.info(end_message)
 
 
