@@ -28,10 +28,11 @@ jobs:
       - name: Install Hatch
         run: |
           pipx install hatch
+          pipx install maturin
 
       - name: Configure
         shell: bash
-        run: echo 'y' | hatch run configure
+        run: echo y | hatch run configure
 
       - name: Run tests
         shell: bash
