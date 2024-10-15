@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-""" Plotter module for postoga. """
-
+"""Plotter module for postoga."""
 
 import numpy as np
 import os
@@ -21,7 +20,7 @@ from modules.utils import shell
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.7.0-devel"
+__version__ = "0.9.3-devel"
 
 
 def set_font():

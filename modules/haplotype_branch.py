@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-""" A module to handle the haplotype branch of postoga. """
-
+"""A module to handle the haplotype branch of postoga."""
 
 import os
 import pandas as pd
@@ -15,7 +14,7 @@ from logger import Log
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.6.0-devel"
+__version__ = "0.9.3-devel"
 
 
 def get_haplotype_classes(paths: list, source: str) -> None:

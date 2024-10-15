@@ -1,4 +1,4 @@
-""" Calculate the distribution of ortholog lengths in TOGA results."""
+"""Calculate the distribution of ortholog lengths in TOGA results."""
 
 import os
 from modules.utils import shell
@@ -9,7 +9,7 @@ from logger import Log
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.7.0-devel"
+__version__ = "0.9.3-devel"
 
 
 def noel_lengths(outdir: str | os.PathLike, model: str) -> str:
@@ -24,9 +24,7 @@ def noel_lengths(outdir: str | os.PathLike, model: str) -> str:
     log = Log.connect(outdir, Constants.FileNames.LOG)
     lengths = os.path.join(outdir, Constants.FileNames.LENGTHS)
 
-    cmd = (
-        f"{Constants.ToolNames.NOEL} -g {model} -o {lengths}"
-    )
+    cmd = f"{Constants.ToolNames.NOEL} -g {model} -o {lengths}"
     sh = shell(cmd)
 
     info = [
