@@ -1,29 +1,17 @@
 #!/usr/bin/env python3
 
-
-"""
-Constants class for postoga. 
-
-postoga is a tool that automates the post-processing of TOGA results.
-At its core, this tool takes a TOGA results directory and produces
-a series of steps to reduce the amount of manual work required to pre-process
-TOGA results for downstream analysis.
-"""
-
-
 import os
 import supply
 
 try:
     import importlib.resources as resources
 except ImportError:
-    # Try backported to PY<37 `importlib_resources`.
     import importlib_resources as resources
 
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.9.0-devel"
+__version__ = "0.9.3-devel"
 __credits__ = ["Bogdan Kirilenko"]
 
 
@@ -128,9 +116,9 @@ class Constants:
     SPECIES_DEFAULT = "human"
     SRC_DEFAULT = "ensembl"
     PLOTSTAMP = """Generated on {} by postoga \nversion: {}, branch: {}, commit: {}.\n
-    This report provides a basic analysis of the data and results 
-    obtained by TOGA and is intended to be used as a preliminary 
-    analisys step. For more information, updates, bugs, suggestions 
+    This report provides a basic analysis of the data and results
+    obtained by TOGA and is intended to be used as a preliminary
+    analisys step. For more information, updates, bugs, suggestions
     or any other inquire, please visit our GitHub repository at
     github.com/alejandrogzi/postoga."""
     HIST_NBINS = 50
@@ -162,12 +150,13 @@ class Constants:
 
     class FileNames:
         SUPPLY_FOLDER = resources.files(supply)
-        ORTHOLOGY = "orthology_classification.tsv"
-        BED = "query_annotation.bed"
+        ORTHOLOGY = "results/orthology_classification.tsv"
+        LOSS = "results/loss_summ_data.tsv"
+        SCORES = "meta/classification_results/orthology_scores.tsv"
+        PARALOGS = "meta/paralogous_projections.tsv"
+        BED = "results/projections.bed"
         CODON = "codon.fasta"
         PROTEIN = "prot.fasta"
-        ISOFORMS = "isoforms.tsv"
-        PARALOGS = "paralogs.txt"
         OWNED_ISOFORMS = "postoga_isoforms.txt"
         FILTERED_BED = "filtered.bed"
         GTF = f"{BED.split('.')[0]}.gtf"
@@ -175,24 +164,17 @@ class Constants:
         FILTERED_GTF = f"{FILTERED_BED.split('.')[0]}.gtf"
         FILTERED_GFF = f"{FILTERED_BED.split('.')[0]}.gff"
         NUCLEOTIDE = "nucleotide.fasta"
-        CLASS = "loss_summ_data.tsv"
-        SCORES = "orthology_scores.tsv" 
         LOG = "postoga.log"
         QUALITY = os.path.join("temp", "transcript_quality.tsv")
-        ANCESTRAL = SUPPLY_FOLDER.joinpath(
-            "Ancestral_placental_complete.txt"
-        )  # os.path.join("./supply", "Ancestral_placental.txt")
+        ANCESTRAL = SUPPLY_FOLDER.joinpath("Ancestral_placental_complete.txt")
         HAPLOTYPE = "merged_assemblies.txt"
-        MAMMALS = SUPPLY_FOLDER.joinpath(
-            "mammal_genes_template.txt"
-        )  # os.path.join("./supply", "mammal_genes_template.txt")
-        BIRDS = SUPPLY_FOLDER.joinpath(
-            "birds_genes_template.txt"
-        )  # os.path.join("./supply", "birds_genes_template.txt")
+        MAMMALS = SUPPLY_FOLDER.joinpath("mammal_genes_template.txt")
+        BIRDS = SUPPLY_FOLDER.joinpath("birds_genes_template.txt")
         LOGO_IMG = SUPPLY_FOLDER.joinpath("postoga_logo.png")
         FONT = SUPPLY_FOLDER.joinpath("font/Arial.ttf")
         PDF = "POSTOGA_REPORT.pdf"
         LENGTHS = "ortholog_lengths.txt"
+        TOGA_TABLE = ".toga.table"
 
     class Commands:
         COMMIT = "git rev-parse --short HEAD"

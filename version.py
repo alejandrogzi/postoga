@@ -2,7 +2,6 @@
 
 """Version handler for postoga."""
 
-
 import os
 
 
@@ -45,6 +44,10 @@ class Version:
                 if file.endswith(".py"):
                     if file != "version.py":
                         scripts.append(os.path.join(root, file))
+                elif file.endswith(".sh"):
+                    scripts.append(os.path.join(root, file))
+                elif file.endswith("Makefile"):
+                    scripts.append(os.path.join(root, file))
         return scripts
 
     def check_uncomitted(self, file):
@@ -61,6 +64,10 @@ class Version:
                     for line in lines:
                         if "__version__ =" in line:
                             line = f'__version__ = "{self.version_repr}"\n'
+                        elif "# version:" in line:
+                            line = f"# version: {self.version_repr}\n"
+                        elif "VERSION=" in line:
+                            line = f'VERSION="{self.version_repr}"\n'
                         f.write(line)
 
     def __repr__(self):
@@ -70,7 +77,7 @@ class Version:
         return self.version_repr
 
 
-__version__ = Version(0, 9, 2, dev=True)
+__version__ = Version(0, 9, 3, dev=True)
 
 if __name__ == "__main__":
     print(f"postoga v.{__version__}")
