@@ -1,4 +1,4 @@
-> [!NOTE]
+> [!WARNING]
 >
 > postoga is dependent from [TOGA](https://github.com/hillerlab/TOGA). Any changes in TOGA will have a repercusion here. If you found any bug/errors, please report them here.
 > This project is in constant development, any desired features are welcome!
@@ -8,7 +8,7 @@
 
 The post-[TOGA](https://github.com/hillerlab/TOGA) processing pipeline.
 
-![version](https://img.shields.io/badge/version-0.9.2--devel-orange)
+![version](https://img.shields.io/badge/version-0.9.3--devel-orange)
 
 <p align="center">
     <img width=700 align="center" src="./supply/postoga_logo_git.png" >
@@ -16,10 +16,16 @@ The post-[TOGA](https://github.com/hillerlab/TOGA) processing pipeline.
 
 <!-- <img src="./supply/postoga_report.png" align="center"/> -->
 
-> ## What's new on version 0.9.2-devel
->
-> - CI workflow + testing
-> - Enhanced env creation (using hatch)
+## What's new on version 0.9.3-devel
+
+> - Re-implementation of postoga to match TOGA2.0 output
+> - Includes self-owned rust bed to gtf coverters through rustools
+> - Forces bed2gtf, bed2gff and gxf2bed installation for quick access
+> - Implements --engine option to use polars
+> - Now manages configuration and test through 'make configure' and 'make test'
+> - Adds license
+> - Drops --skip argument and adds --plot argument to plot stats [currently broken]
+> `- Adds additional BUSCO and completeness stats to the main log file
 
 ## Usage
 
@@ -34,27 +40,22 @@ cd postoga
 
 Activate the environment and configure binaries
 ```bash
-pip install hatch && hatch shell
-hatch run configure
+pip install hatch
+make configure
 ```
 
-Run test to confirm functionality
+Run test to confirm functionality [you can run the test directly from the configuration step]
 ```bash
-hatch run test
+make test
 ```
 
 If you see something like this at then end, postoga is ready!:
 
 ```text
-####################################
-postoga: the post-TOGA processing pipeline
-version: 0.5.0-devel
-commit: 67ecb4e
-branch: master
-
-[XXXXXX] - INFO: postoga started!
-[XXXXXX] - INFO: running in mode base with arguments: {'mode': 'base', 'path': './supply/test/', 'by_class': None, 'by_rel': None, 'threshold': '0.5', 'to': 'gff', 'assembly_qual': './supply/Ancestral_placental.txt'}
-[XXXXXX] - INFO: found 10 projections, 10 unique transcripts, 10 unique genes
+> postoga: the post-TOGA processing pipeline
+> version: 0.9.3-devel[2024-10-15 12:25:05] - INFO: postoga started!
+[2024-10-15 12:25:05] - INFO: running in mode base with arguments: {'mode': 'base', 'outdir': '/Users/alejandrogzi/Documents/projects/postoga/POSTOGA_TEST', 'togadir': '/Users/alejandrogzi/Documents/projects/postoga/supply/test', 'by_class': 'I,PI', 'by_rel': None, 'threshold': 0.95, 'to': 'gtf', 'assembly_qual': PosixPath('/Users/alejandrogzi/Documents/projects/postoga/supply/Ancestral_placental_complete.txt'), 'species': 'human', 'source': 'ensembl', 'phylo': 'mammals', 'plot': False, 'paralog': None, 'isoforms': None, 'engine': 'pandas'}
+[2024-10-15 12:25:05] - INFO: found 52 projections, 49 unique transcripts, 44 unique genes
 ```
 
 Here is a descrption of postoga features:
@@ -63,15 +64,14 @@ Here is a descrption of postoga features:
 >
 > If the only thing you want to do is apply some filters to a TOGA result or convert results to GTF/GFF files, I recommend the following command:
 >
-> ```
+> ```bash
 > ./postoga.py base \
 > --togadir /your/TOGA/dir \
-> --outdir /your/out/dir \ 
+> --outdir /your/out/dir \
 > -bc [YOUR CLASSES] \
 > -br [YOUR RELATIONS] \
 > -th [YOUR THRESHOLD] \
 > -to [YOUR FORMAT GTF/GFF/BED] \
-> --skip
 > ```
 
 ```text
@@ -115,12 +115,14 @@ optional arguments:
                         Source of the ancestral gene names (default: ENSG)
   -phy {mammals,birds}, --phylo {mammals,birds}
                         Phylogenetic group of your species (default: mammals)
-  -s, --skip            Skip steps 2, 3, and 4 and only filter the .bed file
   -par PARALOG, --paralog PARALOG
                         Filter parameter to preserve transcripts with paralog projection probabilities
                         less or equal to a given threshold (0.0 - 1.0)
   -iso ISOFORMS, --isoforms ISOFORMS
                         Path to a custom isoform table (default: None)
+  -e {pandas,polars}, --engine {pandas,polars}
+                        Database engine to create inner db representations (default: pandas)
+  -p, --plot            Flag to plot statistics about the filtered genes (default: False)
 
 postoga.py haplotype [-h] --outdir OUTDIR -hp HAPLOTYPE_DIR [-r RULE] [-s {query,loss}]
 
@@ -134,5 +136,3 @@ optional arguments:
   -s {query,loss}, --source {query,loss}
                         Source of the haplotype classes (query, loss)
 ```
-
-
