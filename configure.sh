@@ -79,7 +79,7 @@ fi
 echo ">> building rust extensions and binaries..."
 
 cd rustools && maturin develop --release
-if [[ $? -ne 0 ]] then
+if [[ $? -ne 0 ]]; then
     echo "!ERROR: maturin failed to build the rust extensions and binaries."
     exit
 fi
