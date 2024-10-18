@@ -101,6 +101,13 @@ impl BedRecord {
 
         exon_frames
     }
+
+    pub fn extract_tx<'a>(line: &'a str) -> &'a str {
+        let mut fields = line.split('\t');
+        let tx = fields.nth(3);
+
+        tx.expect("Cannot extract transcript name from BED line")
+    }
 }
 
 #[cfg(test)]

@@ -13,7 +13,7 @@ from modules.haplotype_branch import merge_haplotypes
 from modules.plotter import postoga_plotter
 from modules.ortholog_lengths import calculate_lengths
 from typing import Type
-from rustools import convert
+from rustools import convert, extract_seqs
 
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
@@ -60,6 +60,16 @@ class TogaDir:
             self.phylo = args.phylo
             self.plot = args.plot
             self.isoforms = args.isoforms
+            self.extract = args.extract
+
+            self.codon = os.path.join(self.togadir, Constants.FileNames.CODON)
+            self.protein = os.path.join(self.togadir, Constants.FileNames.PROTEIN)
+            self.filtered_codon = os.path.join(
+                self.outdir, Constants.FileNames.FILTERED_CODON
+            )
+            self.filtered_protein = os.path.join(
+                self.outdir, Constants.FileNames.FILTERED_PROTEIN
+            )
         else:
             """The haplotype branch of postoga"""
             self.togadirs = args.haplotype_path.split(",")
@@ -155,11 +165,30 @@ class TogaDir:
                 self.engine,
             )
 
-            # self.ortholog_lengths = calculate_lengths(self.outdir, self.gmodel)
-
             self.completeness_stats = busco_completeness(
                 self.outdir, self.custom_table, self.source, self.phylo, self.engine
             )
+
+            if self.extract:
+                extract_seqs(self.bed, self.protein, output=self.filtered_protein)
+                extract_seqs(self.bed, self.codon, output=self.filtered_codon)
+
+                self.log.record(
+                    f"Extracted QUERY sequences from your filtered .bed file to {self.filtered_protein} and {self.filtered_codon}"
+                )
+            elif self.extract == "reference":
+                extract_seqs(
+                    self.bed, self.protein, self.extract, self.filtered_protein
+                )
+                extract_seqs(self.bed, self.codon, self.extract, self.filtered_codon)
+
+                self.log.record(
+                    f"Extracted REFERENCE sequences from your filtered .bed file to {self.filtered_protein} and {self.filtered_codon}"
+                )
+            else:
+                raise ValueError(
+                    f"Error: {self.extract} is not a valid option for the --extract argument. Please choose either 'query' or 'reference'."
+                )
 
             if not self.plot:
                 self.log.record("skipping plotting and only filtering the .bed file")
@@ -291,6 +320,17 @@ def base_branch(subparsers, parent_parser):
         choices=["pandas", "polars"],
         type=str,
         default="pandas",
+    )
+    base_parser.add_argument(
+        "-ext",
+        "--extract",
+        help="Flag or option to extract sequences (only codon and protein alignments) from the filtered genes. "
+        "Can be 'query', 'reference', or just set as a flag (default: False). When used as a flag extracting 'query' sequences is assumed.",
+        required=False,
+        default=False,
+        nargs="?",
+        const=True,
+        choices=["query", "reference"],
     )
 
 

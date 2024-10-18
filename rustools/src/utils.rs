@@ -2,7 +2,7 @@ use crate::bed::BedRecord;
 
 use rayon::prelude::*;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{self, Read};
 use std::path::PathBuf;
@@ -69,6 +69,65 @@ pub fn parallel_parse<'a>(s: &'a str) -> Result<Vec<BedRecord>, &'static str> {
         s.par_lines().map(|line| BedRecord::parse(line)).collect();
 
     records
+}
+
+pub fn extract_tx_from_bed<'a>(s: &'a str) -> HashSet<&'a str> {
+    let transcripts = s
+        .par_lines()
+        .map(|line| BedRecord::extract_tx(line))
+        .collect();
+
+    transcripts
+}
+
+pub enum Hint {
+    Reference,
+    Query,
+}
+
+impl Hint {
+    pub fn from_str(s: &str) -> Self {
+        match s {
+            "reference" => Hint::Reference,
+            "query" => Hint::Query,
+            _ => panic!("Invalid hint"),
+        }
+    }
+
+    pub fn to_str(&self) -> &'static str {
+        match self {
+            Hint::Reference => "REFERENCE",
+            Hint::Query => "QUERY",
+        }
+    }
+}
+
+#[allow(unused_assignments)]
+pub fn build_fasta_hash<'a>(
+    s: &'a [u8],
+    hint: Hint,
+) -> Result<HashMap<&'a str, &'a str>, &'static str> {
+    let map: HashMap<&str, &str> = s
+        .par_split(|&c| c == b'>')
+        .filter(|chunk| !chunk.is_empty())
+        .map(|chunk| {
+            let stop = memchr::memchr(b'\n', chunk).unwrap_or(0);
+            let chr = unsafe { std::str::from_utf8_unchecked(&chunk[..stop]).trim() };
+            let mut key = "";
+
+            if chr.to_uppercase().contains(hint.to_str()) {
+                key = chr.split('|').nth(0).unwrap().trim();
+            } else {
+                return ("", "");
+            }
+
+            let seq = unsafe { std::str::from_utf8_unchecked(&chunk[stop + 1..]).trim() };
+
+            (key, seq)
+        })
+        .collect();
+
+    Ok(map)
 }
 
 pub fn custom_par_parse(

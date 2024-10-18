@@ -21,11 +21,12 @@ The post-[TOGA](https://github.com/hillerlab/TOGA) processing pipeline.
 > - Re-implementation of postoga to match TOGA2.0 output
 > - Includes self-owned rust bed to gtf coverters through rustools
 > - Forces bed2gtf, bed2gff and gxf2bed installation for quick access
+> - Adds --extract to extract filtered projections from codon and protein alignments
 > - Implements --engine option to use polars
 > - Now manages configuration and test through 'make configure' and 'make test'
 > - Adds license
 > - Drops --skip argument and adds --plot argument to plot stats [currently broken]
-> `- Adds additional BUSCO and completeness stats to the main log file
+> - Adds additional BUSCO and completeness stats to the main log file
 
 ## Usage
 
@@ -123,6 +124,9 @@ optional arguments:
   -e {pandas,polars}, --engine {pandas,polars}
                         Database engine to create inner db representations (default: pandas)
   -p, --plot            Flag to plot statistics about the filtered genes (default: False)
+  -ext [{query,reference}], --extract [{query,reference}]
+                          Flag or option to extract sequences (only codon and protein alignments) from the filtered genes. Can be 'query', 'reference', or just set as a flag
+                          (default: False). When used as a flag extracting 'query' sequences is default.
 
 postoga.py haplotype [-h] --outdir OUTDIR -hp HAPLOTYPE_DIR [-r RULE] [-s {query,loss}]
 

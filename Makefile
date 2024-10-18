@@ -3,14 +3,14 @@
 # author = "Alejandro Gonzales-Irribarren"
 # email = "alejandrxgzi@gmail.com"
 # github = "https://github.com/alejandrogzi"
-# version: "0.9.3-devel"
+# version: 0.9.3-devel
 
 .PHONY: configure test create --conda
 
 PYTHON_SCRIPT=postoga_test.py
 PROJECT := $(CURDIR)/POSTOGA_TEST
 CONFIG=configure.sh
-VERSION=0.9.3-devel
+VERSION="0.9.3-devel"
 TEST_PATH := $(CURDIR)/supply/test
 THRESHOLD := 0.95
 CLASS := I,PI
@@ -40,7 +40,7 @@ create:
 
 
 test: create
-	@python3 $(PYTHON_SCRIPT) base --togadir $(TEST_PATH) --outdir $(PROJECT) -th $(THRESHOLD) -bc $(CLASS) -to $(FMT) || (echo "> ERROR: test failed!" && exit 1)
+	@python3 $(PYTHON_SCRIPT) base --togadir $(TEST_PATH) --outdir $(PROJECT) -th $(THRESHOLD) -bc $(CLASS) -to $(FMT) --extract || (echo "> ERROR: test failed!" && exit 1)
 	@rm $(PYTHON_SCRIPT)
 	@mv $(PROJECT)'/postoga.log' './_postoga.test.log'
 	@rm -r $(PROJECT)

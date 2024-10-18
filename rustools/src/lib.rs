@@ -39,6 +39,7 @@ fn convert(
 #[pyo3(name = "rustools")]
 fn rustools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(convert, m)?)?;
+    m.add_function(wrap_pyfunction!(extract_seqs, m)?)?;
     Ok(())
 }
 
@@ -274,4 +275,49 @@ fn move_pos(record: &bed::BedRecord, pos: u32, dist: i32) -> u32 {
         panic!("can't move {} by {}", pos, dist);
     }
     pos
+}
+
+#[pyfunction]
+#[pyo3(signature = (bed, fasta, hint="query", output=None))]
+fn extract_seqs(
+    py: Python,
+    bed: PyObject,
+    fasta: PyObject,
+    hint: &str,
+    output: Option<PyObject>,
+) -> PyResult<PathBuf> {
+    let bed = bed.extract::<PathBuf>(py)?;
+    let fasta = fasta.extract::<PathBuf>(py)?;
+    let output = match output {
+        Some(output) => output.extract::<PathBuf>(py)?,
+        None => {
+            let mut output = fasta.clone();
+            output.set_extension("filtered.fa");
+            output
+        }
+    };
+    let hint = utils::Hint::from_str(hint);
+
+    let records = utils::reader(&bed)?;
+    let txs = utils::extract_tx_from_bed(records.as_str());
+
+    let seqs = utils::reader(&fasta)?;
+    let fa = utils::build_fasta_hash(seqs.as_bytes(), hint).unwrap_or_else(|_| {
+        panic!(
+            "ERROR: Could not build FASTA hash from {}.",
+            fasta.display()
+        );
+    });
+
+    let mut out = BufWriter::new(File::create(&output)?);
+
+    for tx in txs {
+        let seq = fa.get(tx).unwrap_or_else(|| {
+            panic!("ERROR: {} not found in FASTA file.", tx);
+        });
+        writeln!(out, ">{}", tx)?;
+        writeln!(out, "{}", seq)?;
+    }
+
+    Ok(output)
 }
