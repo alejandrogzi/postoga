@@ -64,7 +64,7 @@ class Log:
 
     def intro(self):
         start_message = "\n> postoga: the post-TOGA processing pipeline"
-        version = f"> version: {self.version}"
+        version = f"> version: {self.version}\n\n"
 
         with open(self.log_file, "w") as log:
             log.write("\n".join([start_message, version]))
