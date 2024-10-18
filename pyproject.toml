@@ -4,11 +4,11 @@ build-backend = "hatchling.build"
 
 [project]
 name = "postoga"
-version = "0.9.2"
+version = "0.9.3"
 description = "The post-TOGA processing pipeline"
-license = {text = "MIT"}
+license = { text = "MIT" }
 authors = [
-  {name = "Alejandro Gonzales-Irribarren", email = "alejandrxgzi@gmail.com"},
+    { name = "Alejandro Gonzales-Irribarren", email = "alejandrxgzi@gmail.com" },
 ]
 keywords = [
     "genomics",
@@ -36,6 +36,7 @@ dependencies = [
     "matplotlib==3.8.0",
     "supply",
     "importlib.resources",
+    "polars==1.9.0",
 ]
 
 [project.urls]
@@ -44,21 +45,18 @@ repository = "https://github.com/alejandrogzi/postoga"
 
 [tool.ruff]
 target-version = "py37"
-exclude = [
-    ".venv",
-]
+exclude = [".venv"]
 
 [tool.ruff.lint]
 extend-select = [
-    "B",  # bugbear
-    # "C",  # mccabe complexity
+    "B", # bugbear
     # "D",  # pydocstyle
-    "E",  # style errors
-    "F",  # pyflakes
-    "I",  # isort
+    "E",   # style errors
+    "F",   # pyflakes
+    "I",   # isort
     "RUF", # ruff-specific rules
-    "UP", # pyupgrade
-    "W",  # style  warnings
+    "UP",  # pyupgrade
+    "W",   # style  warnings
 ]
 
 [tool.ruff.lint.pydocstyle]
@@ -68,12 +66,7 @@ convention = "numpy"
 minversion = "7"
 log_cli_level = "info"
 xfail_strict = true
-addopts = [
-    "-ra",
-    "--showlocals",
-    "--strict-config",
-    "--strict-markers",
-]
+addopts = ["-ra", "--showlocals", "--strict-config", "--strict-markers"]
 filterwarnings = ["ignore::PendingDeprecationWarning"]
 testpaths = ["tests"]
 
@@ -84,8 +77,8 @@ path = ".env"
 fix = "ruff check --fix ."
 lint = "ruff check ."
 format = "ruff format ."
-configure = "cargo install bed2gtf bed2gff noel"
-test = "./test.sh"
+configure = "make configure"
+test = "make test"
 
 [[tool.hatch.envs.test.matrix]]
 python = ["3.8", "3.9", "3.10", "3.11"]

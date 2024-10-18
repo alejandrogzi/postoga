@@ -6,7 +6,7 @@
 - re-implemented `TOGA_assemblyStats.py` to estimate annotation completeness in single mode and haplotype-resolved assemblies -> `--assembly_qual` (to specify genes db -> tab-separated file [.txt,.tsv,.csv,...]; default ancestral); `--haplotype_path` (to specify path of both haplotypes) -> the equivalent of `TOGA_assemblyStats.py -m stats` && `TOGA_assemblyStats.py -m stats -ances ./ances.txt` is completed, `TOGA_assemblyStats.py -m merge` will be available in v.0.5.0-devel.
 - postoga now automates: 1) dependencies [v.0.5.0-devel], 2) filtering, 3) conversion, 4) assembly quality estimation (just 1/4 quality steps postoga will have)
 - shell is now `utils.py` (postoga base utility module)
-- added https://github.com/hillerlab/TOGA/blob/master/TOGAInput/human_hg38/Ancestral_placental.txt to `./supply/Ancestral_placental.txt` 
+- added https://github.com/hillerlab/TOGA/blob/master/TOGAInput/human_hg38/Ancestral_placental.txt to `./supply/Ancestral_placental.txt`
 
 ## postoga v.0.5.0-devel
 
@@ -26,7 +26,7 @@
 - postoga now reports findings automatically and save them under `POSTOGA_REPORT.pdf`
 - Modules have been updated to synchronize with plotter module.
 - Added plotter-dependent project-wide constants
-- Implemented `get_stats_from_bed` under `filter_query_annotation`, to quickly extract query stats 
+- Implemented `get_stats_from_bed` under `filter_query_annotation`, to quickly extract query stats
 
 ## postoga v.0.7.0-devel
 
@@ -49,3 +49,13 @@
 - Adds `--outdir` to control where postoga output goes.
 - Adds `--isoforms` to allow the user specify external isoform tables.
 - Disables git features from `logger.py` [branch/commit] info.
+
+# postoga 0.9.3-devel
+- Re-implementation of postoga to match TOGA2.0 output
+- Includes self-owned rust bed to gtf coverters through rustools
+- Forces bed2gtf, bed2gff and gxf2bed installation for quick access
+- Implements --engine option to use polars
+- Now manages configuration and test through 'make configure' and 'make test'
+- Adds license
+- Drops --skip argument and adds --plot argument to plot stats [currently broken]
+- Adds additional BUSCO and completeness stats to the main log file
