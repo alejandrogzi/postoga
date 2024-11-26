@@ -9,6 +9,7 @@ import os
 from constants import Constants
 from logger import Log
 from modules.utils import bed_reader
+from typing import Union
 
 
 __author__ = "Alejandro Gonzales-Irribarren"
@@ -18,7 +19,7 @@ __version__ = "0.8.0-devel"
 
 
 def filter_bed(
-    togadir: str | os.PathLike, outdir: str | os.PathLike, table: pd.DataFrame, by_class: list, by_rel: list, threshold: float, paralog: float
+    togadir: Union[str, os.PathLike], outdir: Union[str, os.PathLike], table: pd.DataFrame, by_class: list, by_rel: list, threshold: float, paralog: float
     ) -> tuple:
     """
     Filters the original .bed file to produce a custom filtered file

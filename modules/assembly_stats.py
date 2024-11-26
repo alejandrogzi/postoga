@@ -16,6 +16,7 @@ import pandas as pd
 from constants import Constants
 from logger import Log
 from modules.utils import bed_reader, ancestral_reader
+from typing import Union
 
 
 __author__ = "Alejandro Gonzales-Irribarren"
@@ -24,7 +25,7 @@ __github__ = "https://github.com/alejandrogzi"
 __version__ = "0.7.0-devel"
 
 
-def get_classes(outdir: str | os.PathLike, bed: str, table: pd.DataFrame) -> pd.DataFrame:
+def get_classes(outdir: Union[str, os.PathLike], bed: str, table: pd.DataFrame) -> pd.DataFrame:
     """
     @type outdir: str | os.PathLike
     @param outdir: path to output directory
@@ -49,7 +50,7 @@ def get_classes(outdir: str | os.PathLike, bed: str, table: pd.DataFrame) -> pd.
 
 
 def qual_by_ancestral(
-    outdir: str | os.PathLike, bed: str, table: pd.DataFrame, assembly_qual: str, source: str
+    outdir: Union[str, os.PathLike], bed: str, table: pd.DataFrame, assembly_qual: str, source: str
 ) -> None:
     """
     @type outdir: str | os.PathLike
@@ -77,7 +78,7 @@ def qual_by_ancestral(
     return stats
 
 
-def overlap_busco(outdir: str | os.PathLike, db: str, table: pd.DataFrame, src: str) -> float:
+def overlap_busco(outdir: Union[str, os.PathLike], db: str, table: pd.DataFrame, src: str) -> float:
     """
     @type outdir: str | os.PathLike
     @param outdir: path to output directory
@@ -105,7 +106,7 @@ def overlap_busco(outdir: str | os.PathLike, db: str, table: pd.DataFrame, src: 
     return track
 
 
-def busco_completeness(outdir: str | os.PathLike, table: pd.DataFrame, src: str, phylo: str) -> list:
+def busco_completeness(outdir: Union[str, os.PathLike], table: pd.DataFrame, src: str, phylo: str) -> list:
     """
     @type outdir: str | os.PathLike
     @param outdir: path to output directory

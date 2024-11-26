@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 """ A module to convert .bed files to .gtf and .gff files. """
 
 
@@ -8,6 +7,7 @@ import os
 from constants import Constants
 from logger import Log
 from modules.utils import shell
+from typing import Union
 
 
 __author__ = "Alejandro Gonzales-Irribarren"
@@ -16,7 +16,7 @@ __github__ = "https://github.com/alejandrogzi"
 __version__ = "0.6.0-devel"
 
 
-def bed_to_gtf(outdir: str | os.PathLike, bed: str, isoforms: str) -> str:
+def bed_to_gtf(outdir: Union[str, os.PathLike], bed: str, isoforms: str) -> str:
     """
     Converts a .bed file to .gtf
 
@@ -45,7 +45,7 @@ def bed_to_gtf(outdir: str | os.PathLike, bed: str, isoforms: str) -> str:
     return gtf
 
 
-def bed_to_gff(outdir: str | os.PathLike, bed: str, isoforms: str) -> str:
+def bed_to_gff(outdir: Union[str, os.PathLike], bed: str, isoforms: str) -> str:
     """
     Converts a .bed file to .gff
 

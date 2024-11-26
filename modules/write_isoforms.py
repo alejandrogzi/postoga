@@ -8,8 +8,10 @@ import pandas as pd
 import os
 from constants import Constants
 from logger import Log
+from typing import Union
 
 pd.options.mode.chained_assignment = None  # default='warn'
+
 
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
@@ -17,7 +19,7 @@ __github__ = "https://github.com/alejandrogzi"
 __version__ = "0.7.0-devel"
 
 
-def isoform_writer(outdir: str | os.PathLike, table: pd.DataFrame) -> str:
+def isoform_writer(outdir: Union[str, os.PathLike], table: pd.DataFrame) -> str:
     """
     Writes all isoforms to a text file
 
