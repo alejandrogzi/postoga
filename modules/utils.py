@@ -135,9 +135,9 @@ def isoform_writer(
 
     # get only gene:transcript pairs
     if engine != "polars":
-        table.iloc[:, [0, 2]].dropna().to_csv(f, sep="\t", header=None, index=False)
+        table.iloc[:, [1, 3]].dropna().to_csv(f, sep="\t", header=None, index=False)
     else:
-        table.select("t_gene", "transcripts").drop_nulls().write_csv(
+        table.select("t_gene", "projection").drop_nulls().write_csv(
             f, separator="\t", include_header=False, quote_char=""
         )
 

@@ -21,7 +21,7 @@ __version__ = "0.9.3-devel"
 def filter_bed(
     togadir: str | os.PathLike,
     outdir: str | os.PathLike,
-    table: pd.DataFrame,
+    table: pd.DataFrame | pl.DataFrame,
     by_class: str | None,
     by_rel: str | None,
     threshold: float | None,
@@ -42,11 +42,11 @@ def filter_bed(
         by_class : list
             The classes to filter the table by.
         by_rel : list
-            The relationships to filter the table by.
+            The orthology_relationships to filter the table by.
         threshold : float
-            The orthology score threshold.
+            The orthology orthology_probability threshold.
         paralog : float
-            The paralogy score threshold.
+            The paralogy orthology_probability threshold.
 
     Returns
     -------
@@ -64,19 +64,19 @@ def filter_bed(
 
     if threshold:
         if engine != "polars":
-            table = table[table["pred"] >= float(threshold)]
+            table = table[table["orthology_probability"] >= float(threshold)]
         else:
-            table = table.filter(pl.col("pred") >= threshold)
+            table = table.filter(pl.col("orthology_probability") >= threshold)
         log.record(
-            f"discarded {initial - len(table)} projections with orthology scores <{threshold}"
+            f"discarded {initial - len(table)} projections with orthology orthology_probabilitys <{threshold}"
         )
 
     if by_class:
         edge = len(table)
         if engine != "polars":
-            table = table[table["class"].isin(by_class.split(","))]
+            table = table[table["status"].isin(by_class.split(","))]
         else:
-            table = table.filter(pl.col("class").is_in(by_class.split(",")))
+            table = table.filter(pl.col("status").is_in(by_class.split(",")))
         log.record(
             f"discarded {edge - len(table)} projections with classes other than {by_class}"
         )
@@ -84,24 +84,28 @@ def filter_bed(
     if by_rel:
         edge = len(table)
         if engine != "polars":
-            table = table[table["relation"].isin(by_rel.split(","))]
+            table = table[table["orthology_relation"].isin(by_rel.split(","))]
         else:
-            table = table.filter(pl.col("relation").is_in(by_rel.split(",")))
+            table = table.filter(pl.col("orthology_relation").is_in(by_rel.split(",")))
         log.record(
-            f"discarded {edge - len(table)} projections with relationships other than {by_rel}"
+            f"discarded {edge - len(table)} projections with orthology_relationships other than {by_rel}"
         )
     if paralog:
         edge = len(table)
         if engine != "polars":
-            table = table.groupby("helper").filter(
-                lambda x: (x["pred"] > float(paralog)).sum() <= 1
+            table = table.groupby("reference_transcript").filter(
+                lambda x: (x["orthology_probability"] > float(paralog)).sum() <= 1
             )
         else:
             table = table.filter(
-                pl.col("helper").is_in(
-                    table.group_by("helper")
+                pl.col("reference_transcript").is_in(
+                    table.group_by("reference_transcript")
                     .agg(
-                        [(pl.col("pred") > paralog).sum().alias("count_above_paralog")]
+                        [
+                            (pl.col("orthology_probability") > paralog)
+                            .sum()
+                            .alias("count_above_paralog")
+                        ]
                     )
                     .filter(pl.col("count_above_paralog") <= 1)["helper"]
                 )
@@ -116,8 +120,8 @@ def filter_bed(
         bed = pd.read_csv(
             os.path.join(togadir, Constants.FileNames.BED), sep="\t", header=None
         )
-        bed = bed[bed[3].isin(table["transcripts"])]
-        custom_table = table[table["transcripts"].isin(bed[3])]
+        bed = bed[bed[3].isin(table["projection"])]
+        custom_table = table[table["projection"].isin(bed[3])]
 
         bed.to_csv(
             f,
@@ -127,8 +131,8 @@ def filter_bed(
         )
 
         stats = [
-            custom_table["class"].value_counts().to_dict(),
-            custom_table["relation"].value_counts().to_dict(),
+            custom_table["status"].value_counts().to_dict(),
+            custom_table["orthology_relation"].value_counts().to_dict(),
         ]
     else:
         bed = pl.read_csv(
@@ -136,15 +140,15 @@ def filter_bed(
             separator="\t",
             has_header=False,
         )
-        bed = bed.filter(pl.col("column_4").is_in(table["transcripts"]))
-        custom_table = table.filter(pl.col("transcripts").is_in(bed["column_4"]))
+        bed = bed.filter(pl.col("column_4").is_in(table["projection"]))
+        custom_table = table.filter(pl.col("projection").is_in(bed["projection"]))
 
         bed.write_csv(f, include_header=False, separator="\t")
 
         stats = [
             dict(
                 zip(
-                    *table.group_by("class")
+                    *table.group_by("status")
                     .agg(pl.len())
                     .to_dict(as_series=False)
                     .values()
@@ -152,7 +156,7 @@ def filter_bed(
             ),
             dict(
                 zip(
-                    *table.group_by("relation")
+                    *table.group_by("orthology_relation")
                     .agg(pl.len())
                     .to_dict(as_series=False)
                     .values()
@@ -162,15 +166,15 @@ def filter_bed(
 
     info = [
         f"kept {len(bed)} projections after filters, discarded {initial - len(bed)}.",
-        f"{len(bed)} projections are coming from {len(custom_table['helper'].unique())} unique transcripts and {len(custom_table['t_gene'].unique())} genes",
-        f"class stats of new bed: {custom_table['class'].value_counts().to_dict()}",
-        f"relation stats of new bed: {custom_table['relation'].value_counts().to_dict()}",
+        f"{len(bed)} projections are coming from {len(custom_table['reference_transcript'].unique())} unique transcripts and {len(custom_table['reference_gene'].unique())} genes",
+        f"class stats of new bed: {custom_table['status'].value_counts().to_dict()}",
+        f"orthology_relation stats of new bed: {custom_table['orthology_relation'].value_counts().to_dict()}",
         f"filtered bed file written to {f}",
     ]
 
     [log.record(i) for i in info]
 
-    return f, stats, len(custom_table["t_gene"].unique()), custom_table
+    return f, stats, len(custom_table["reference_gene"].unique()), custom_table
 
 
 def get_stats_from_bed(
@@ -201,17 +205,17 @@ def get_stats_from_bed(
     bed = bed_reader(bed_path)
 
     if engine != "polars":
-        bed_table = table[table["transcripts"].isin(bed[3])]
+        bed_table = table[table["projection"].isin(bed[3])]
         stats = [
-            bed_table["class"].value_counts().to_dict(),
-            bed_table["relation"].value_counts().to_dict(),
+            bed_table["status"].value_counts().to_dict(),
+            bed_table["orthology_relation"].value_counts().to_dict(),
         ]
     else:
-        bed_table = table.filter(pl.col("transcripts").is_in(bed["column_4"]))
+        bed_table = table.filter(pl.col("projection").is_in(bed["column_4"]))
         stats = [
             dict(
                 zip(
-                    *table.group_by("class")
+                    *table.group_by("status")
                     .agg(pl.len())
                     .to_dict(as_series=False)
                     .values()
@@ -219,7 +223,7 @@ def get_stats_from_bed(
             ),
             dict(
                 zip(
-                    *table.group_by("relation")
+                    *table.group_by("orthology_relation")
                     .agg(pl.len())
                     .to_dict(as_series=False)
                     .values()
@@ -227,4 +231,4 @@ def get_stats_from_bed(
             ),
         ]
 
-    return stats, len(bed_table["t_gene"].unique())
+    return stats, len(bed_table["reference_gene"].unique())

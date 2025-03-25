@@ -12,7 +12,7 @@ __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
 __version__ = "0.9.3-devel"
-__credits__ = ["Bogdan Kirilenko"]
+__credits__ = ["Bogdan Kirilenko", "Yury Malovichko"]
 
 
 class Constants:
@@ -150,16 +150,18 @@ class Constants:
 
     class FileNames:
         SUPPLY_FOLDER = resources.files(supply)
-        ORTHOLOGY = "results/orthology_classification.tsv"
-        LOSS = "results/loss_summ_data.tsv"
-        SCORES = "meta/classification_results/orthology_scores.tsv"
+        ORTHOLOGY = "orthology_classification.tsv"
+        LOSS = "loss_summary.tsv"
+        SCORES = "orthology_scores.tsv"
+        INACTIVATING_MUTATIONS = "inactivating_mutations.tsv"
         PARALOGS = "meta/paralogous_projections.tsv"
-        BED = "results/projections.bed"
-        CODON = "results/codon_aln.fa"
+        BED = "query_annotation.bed"
+        CODON = "codon_aln.fa"
         FILTERED_CODON = "codon_aln.filtered.fa"
-        PROTEIN = "results/protein_aln.fa"
+        PROTEIN = "protein_aln.fa"
+        QUERY_GENES = "query_genes.tsv"
         FILTERED_PROTEIN = "protein_aln.filtered.fa"
-        EXONS = "results/exon_aln.fa"
+        EXONS = "exon_aln.fa"
         OWNED_ISOFORMS = "postoga_isoforms.txt"
         FILTERED_BED = "filtered.bed"
         GTF = f"{BED.split('.')[0]}.gtf"
@@ -177,7 +179,7 @@ class Constants:
         FONT = SUPPLY_FOLDER.joinpath("font/Arial.ttf")
         PDF = "POSTOGA_REPORT.pdf"
         LENGTHS = "ortholog_lengths.txt"
-        TOGA_TABLE = ".toga.table"
+        TOGA_TABLE = "toga.table"
 
     class Commands:
         COMMIT = "git rev-parse --short HEAD"

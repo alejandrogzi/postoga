@@ -68,21 +68,23 @@ def qual_by_ancestral(
 
     if engine != "polars":
         genes = (
-            table[table["transcripts"].isin(bed[3])]
-            .sort_values(by=["t_gene", "class"], key=lambda x: x.map(Constants.ORDER))
-            .drop_duplicates("t_gene", keep="first")
+            table[table["projection"].isin(bed[3])]
+            .sort_values(
+                by=["reference_gene", "status"], key=lambda x: x.map(Constants.ORDER)
+            )
+            .drop_duplicates("reference_gene", keep="first")
         )
 
-        overlap = genes[genes["t_gene"].isin(ancestral)]
-        stats = overlap["class"].value_counts().to_dict()
+        overlap = genes[genes["reference_gene"].isin(ancestral)]
+        stats = overlap["status"].value_counts().to_dict()
     else:
-        genes = table.filter(pl.col("transcripts").is_in(bed["column_4"])).unique(
-            subset="t_gene", keep="first"
+        genes = table.filter(pl.col("projection").is_in(bed["column_4"])).unique(
+            subset="reference_gene", keep="first"
         )
 
-        overlap = genes.filter(pl.col("t_gene").is_in(ancestral))
+        overlap = genes.filter(pl.col("reference_gene").is_in(ancestral))
         stats = dict(
-            zip(*table.group_by("class").len().to_dict(as_series=False).values())
+            zip(*table.group_by("status").len().to_dict(as_series=False).values())
         )
 
     log.record(
@@ -146,7 +148,7 @@ def overlap_busco(
             f"number of genes in {odb} database with {src} nomenclature: {len(odb_df)}"
         )
 
-        overlap = set(odb_df[src]).intersection(set(table["t_gene"]))
+        overlap = set(odb_df[src]).intersection(set(table["reference_gene"]))
         track.append((odb, len(overlap) / len(odb_df) * 100))
 
     return track
