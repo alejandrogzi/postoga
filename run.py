@@ -170,41 +170,27 @@ class TogaDir:
             )
 
             if self.extract:
-                extract_seqs(self.bed, self.protein, output=self.filtered_protein)
-                extract_seqs(self.bed, self.codon, output=self.filtered_codon)
+                if self.extract == "reference":
+                    extract_seqs(
+                        self.bed, self.protein, self.extract, self.filtered_protein
+                    )
+                    extract_seqs(
+                        self.bed, self.codon, self.extract, self.filtered_codon
+                    )
 
-                self.log.record(
-                    f"Extracted QUERY sequences from your filtered .bed file to {self.filtered_protein} and {self.filtered_codon}"
-                )
-            elif self.extract == "reference":
-                extract_seqs(
-                    self.bed, self.protein, self.extract, self.filtered_protein
-                )
-                extract_seqs(self.bed, self.codon, self.extract, self.filtered_codon)
+                    self.log.record(
+                        f"Extracted REFERENCE sequences from your filtered .bed file to {self.filtered_protein} and {self.filtered_codon}"
+                    )
+                else:
+                    extract_seqs(self.bed, self.protein, output=self.filtered_protein)
+                    extract_seqs(self.bed, self.codon, output=self.filtered_codon)
 
-                self.log.record(
-                    f"Extracted REFERENCE sequences from your filtered .bed file to {self.filtered_protein} and {self.filtered_codon}"
-                )
-            else:
-                raise ValueError(
-                    f"Error: {self.extract} is not a valid option for the --extract argument. Please choose either 'query' or 'reference'."
-                )
+                    self.log.record(
+                        f"Extracted QUERY sequences from your filtered .bed file to {self.filtered_protein} and {self.filtered_codon}"
+                    )
 
             if not self.plot:
                 self.log.record("skipping plotting and only filtering the .bed file")
-            # else:
-            #     postoga_plotter(
-            #         self.outdir,
-            #         self.table,
-            #         self.ancestral_stats,
-            #         self.base_stats,
-            #         self.ngenes,
-            #         self.ortholog_lengths,
-            #         self.source,
-            #         self.completeness_stats,
-            #         self.species,
-            #         self.stats,
-            #     )
 
             self.log.close()
 
