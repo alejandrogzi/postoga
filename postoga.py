@@ -15,7 +15,7 @@ __github__ = "https://github.com/alejandrogzi"
 __version__ = "0.9.3-devel"
 
 
-from run import parser, TogaDir
+from run import TogaDir, parser
 
 
 def main():

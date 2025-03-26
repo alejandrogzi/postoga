@@ -4,7 +4,6 @@
 
 import os
 
-
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
@@ -21,12 +20,12 @@ class Version:
         self.version_repr = f"{major}.{minor}.{patch}"
         self.readme_repr = self.version_repr
         if self.dev:
-            self.version_repr += f"-devel"
-            self.readme_repr += f"--devel"
+            self.version_repr += "-devel"
+            self.readme_repr += "--devel"
             self.color = "orange"
 
     def update_readme(self, filename="README.md"):
-        with open(filename, "r") as f:
+        with open(filename) as f:
             lines = f.readlines()
 
         with open(filename, "w") as f:
@@ -39,7 +38,7 @@ class Version:
 
     def get_py_scripts(self):
         scripts = []
-        for root, dirs, files in os.walk("."):
+        for root, _dirs, files in os.walk("."):
             for file in files:
                 if file.endswith(".py"):
                     if file != "version.py":
@@ -58,7 +57,7 @@ class Version:
         scripts = self.get_py_scripts()
         for script in scripts:
             if self.check_uncomitted(script) or script == "logger.py":
-                with open(script, "r") as f:
+                with open(script) as f:
                     lines = f.readlines()
                 with open(script, "w") as f:
                     for line in lines:

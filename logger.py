@@ -34,12 +34,9 @@ This class have been included in postoga
 to better manage the logging of the tool.
 """
 
-import os
 import datetime
-from constants import Constants
-from modules.utils import shell
 import logging
-
+import os
 
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
@@ -83,7 +80,7 @@ class Log:
         return log
 
     def close(self):
-        end_message = f"> postoga finished!\n"
+        end_message = "> postoga finished!\n"
         logging.info(end_message)
 
 

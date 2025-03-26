@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
 
-import os
 import argparse
+import os
 import sys
+
 from constants import Constants
 from logger import Log
+from modules.assembly_stats import busco_completeness, qual_by_ancestral
+from modules.filter_query_annotation import filter_bed, get_stats_from_bed
+from modules.haplotype_branch import merge_haplotypes
 from modules.make_query_table import query_table
 from modules.utils import isoform_writer
-from modules.filter_query_annotation import filter_bed, get_stats_from_bed
-from modules.assembly_stats import qual_by_ancestral, busco_completeness
-from modules.haplotype_branch import merge_haplotypes
-from modules.plotter import postoga_plotter
-from modules.ortholog_lengths import calculate_lengths
-from typing import Type
 from rustools import convert, extract_seqs
 
 __author__ = "Alejandro Gonzales-Irribarren"
