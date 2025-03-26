@@ -2,20 +2,21 @@
 
 """Plotter module for postoga."""
 
-import numpy as np
 import os
-import pandas as pd
-import matplotlib.pyplot as plt
 from collections import defaultdict
-from matplotlib import ticker
-import matplotlib.font_manager as font_manager
-from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from datetime import datetime
+
+import matplotlib.font_manager as font_manager
 import matplotlib.gridspec as gridspec
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from matplotlib import ticker
+from matplotlib.offsetbox import AnnotationBbox, OffsetImage
+
 from constants import Constants
 from logger import Log
 from modules.utils import shell
-
 
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"

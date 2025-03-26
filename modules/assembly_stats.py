@@ -12,13 +12,14 @@ based on the Ancestral_placental.txt file.
 """
 
 import os
+from typing import Dict, List, Tuple, Union
+
 import pandas as pd
 import polars as pl
+
 from constants import Constants
 from logger import Log
-from modules.utils import bed_reader, ancestral_reader
-from typing import Dict, List, Tuple
-
+from modules.utils import ancestral_reader, bed_reader
 
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
@@ -27,9 +28,9 @@ __version__ = "0.9.3-devel"
 
 
 def qual_by_ancestral(
-    outdir: str | os.PathLike,
-    bed: str | os.PathLike,
-    table: pd.DataFrame | pl.DataFrame,
+    outdir: Union[str, os.PathLike],
+    bed: Union[str, os.PathLike],
+    table: Union[pd.DataFrame, pl.DataFrame],
     assembly_qual: str,
     source: str,
     engine: str = "pandas",
@@ -96,9 +97,9 @@ def qual_by_ancestral(
 
 
 def overlap_busco(
-    outdir: str | os.PathLike,
+    outdir: Union[str, os.PathLike],
     db: List[str],
-    table: pd.DataFrame | pl.DataFrame,
+    table: Union[pd.DataFrame, pl.DataFrame],
     src: str,
     engine: str = "pandas",
 ) -> List[Tuple[str, float]]:
@@ -155,8 +156,8 @@ def overlap_busco(
 
 
 def busco_completeness(
-    outdir: str | os.PathLike,
-    table: pd.DataFrame | pl.DataFrame,
+    outdir: Union[str, os.PathLike],
+    table: Union[pd.DataFrame, pl.DataFrame],
     src: str,
     phylo: str,
     engine: str = "pandas",

@@ -3,13 +3,15 @@
 """A module to handle the haplotype branch of postoga."""
 
 import os
-import pandas as pd
-import numpy as np
-from modules.utils import bed_reader
-from modules.make_query_table import query_table
-from constants import Constants
 from functools import reduce
+
+import numpy as np
+import pandas as pd
+
+from constants import Constants
 from logger import Log
+from modules.make_query_table import query_table
+from modules.utils import bed_reader
 
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"

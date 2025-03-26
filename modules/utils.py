@@ -2,12 +2,14 @@
 
 """A module with postoga base utility functions."""
 
-import subprocess
 import os
+import subprocess
+from typing import List, Tuple, Union
+
 import pandas as pd
 import polars as pl
+
 from constants import Constants
-from typing import List, Tuple
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -41,8 +43,8 @@ def shell(cmd: str) -> str:
 
 
 def bed_reader(
-    bed: str | os.PathLike, engine: str = "pandas"
-) -> pd.DataFrame | pl.DataFrame:
+    bed: Union[str, os.PathLike], engine: str = "pandas"
+) -> Union[pd.DataFrame, pl.DataFrame]:
     """
     Reads a .bed file and returns a pandas DataFrame
 
@@ -104,8 +106,8 @@ def ancestral_reader(ancestral: str, source: str, engine: str = "pandas") -> Lis
 
 
 def isoform_writer(
-    outdir: str | os.PathLike,
-    table: pd.DataFrame | pl.DataFrame,
+    outdir: Union[str, os.PathLike],
+    table: Union[pd.DataFrame, pl.DataFrame],
     engine: str = "pandas",
 ) -> Tuple[str, str]:
     """

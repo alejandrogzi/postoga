@@ -1,10 +1,13 @@
 """Calculate the distribution of ortholog lengths in TOGA results."""
 
 import os
-from modules.utils import shell
+from typing import Union
+
 import pandas as pd
+
 from constants import Constants
 from logger import Log
+from modules.utils import shell
 
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
@@ -12,7 +15,7 @@ __github__ = "https://github.com/alejandrogzi"
 __version__ = "0.9.3-devel"
 
 
-def noel_lengths(outdir: str | os.PathLike, model: str) -> str:
+def noel_lengths(outdir: Union[str, os.PathLike], model: str) -> str:
     """
     Calculate the distribution of ortholog lengths in the resulting gtf/gff file using NOEL.
 
@@ -39,7 +42,7 @@ def noel_lengths(outdir: str | os.PathLike, model: str) -> str:
     return lengths
 
 
-def process_lenghts(outdir: str | os.PathLike, lengths: str) -> pd.Series:
+def process_lenghts(outdir: Union[str, os.PathLike], lengths: str) -> pd.Series:
     """
     Processes the lengths file to get the ortholog lengths.
 
@@ -58,7 +61,7 @@ def process_lenghts(outdir: str | os.PathLike, lengths: str) -> pd.Series:
     ogenes = igenes - fgenes
 
     info = [
-        f"processing lengths file",
+        "processing lengths file",
         f"total genes: {igenes}",
         f"genes with lengths < 10000: {fgenes}",
         f"genes with lengths >= 10000: {ogenes}",
@@ -69,7 +72,7 @@ def process_lenghts(outdir: str | os.PathLike, lengths: str) -> pd.Series:
     return df["lengths"]
 
 
-def calculate_lengths(outdir: str | os.PathLike, model: str) -> pd.Series:
+def calculate_lengths(outdir: Union[str, os.PathLike], model: str) -> pd.Series:
     """
     Calculate the distribution of ortholog lengths in the resulting gtf/gff file.
 

@@ -22,12 +22,13 @@ The inner constructor is written to /outdir/.toga.table
 """
 
 import os
+from typing import Dict, Optional, Tuple, Union
+
 import pandas as pd
 import polars as pl
+
 from constants import Constants
 from logger import Log
-from typing import Tuple, Dict
-
 
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
@@ -39,8 +40,10 @@ MISSING_PLACEHOLDER = "GENE_NOT_FOUND"
 
 
 def query_table(
-    path: str | os.PathLike, outdir: str | os.PathLike, engine: str = "pandas"
-) -> pd.DataFrame | pl.DataFrame:
+    path: Union[str, os.PathLike],
+    outdir: Union[str, os.PathLike],
+    engine: str = "pandas",
+) -> Union[pd.DataFrame, pl.DataFrame]:
     """
     Constructs a query table from a TOGA output directory
     considering all possible projections and orthologs.
@@ -91,7 +94,7 @@ def get_median(group: pd.DataFrame) -> float:
 
 
 def read_pd(
-    path: str | os.PathLike,
+    path: Union[str, os.PathLike],
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, Dict[str, str]]:
     """
     Pandas reader for TOGA directory
@@ -129,7 +132,7 @@ def read_pd(
     return orthology, loss, score, inact_muts, query_genes
 
 
-def make_pd_table(path: str | os.PathLike) -> pd.DataFrame:
+def make_pd_table(path: Union[str, os.PathLike]) -> pd.DataFrame:
     """
     Constructs a query table from a TOGA output directory using pandas engine
 
@@ -228,7 +231,7 @@ def make_pd_table(path: str | os.PathLike) -> pd.DataFrame:
 
 
 def read_pl(
-    path: str | os.PathLike,
+    path: Union[str, os.PathLike],
 ) -> Tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame, pl.DataFrame]:
     """
     Polars reader for TOGA directory
@@ -281,7 +284,7 @@ def read_pl(
     return orthology, loss, score, inact_muts
 
 
-def make_pl_table(path: str | os.PathLike) -> pl.DataFrame:
+def make_pl_table(path: Union[str, os.PathLike]) -> pl.DataFrame:
     """
     Constructs a query table from a TOGA output directory using polars engine
 

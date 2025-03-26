@@ -3,14 +3,15 @@
 
 """A module to filter the original .bed file based on the query table."""
 
+import os
+from typing import Dict, List, Optional, Tuple, Union
+
 import pandas as pd
 import polars as pl
-import os
+
 from constants import Constants
 from logger import Log
 from modules.utils import bed_reader
-from typing import Tuple, List, Dict
-
 
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
@@ -19,23 +20,23 @@ __version__ = "0.9.3-devel"
 
 
 def filter_bed(
-    togadir: str | os.PathLike,
-    outdir: str | os.PathLike,
-    table: pd.DataFrame | pl.DataFrame,
-    by_class: str | None,
-    by_rel: str | None,
-    threshold: float | None,
-    paralog: float | None,
-    engine: str = "pandas",
+    togadir: Union[str, os.PathLike],
+    outdir: Union[str, os.PathLike],
+    table: Union[pd.DataFrame, pl.DataFrame],
+    by_class: Optional[Union[str, os.PathLike]],
+    by_rel: Optional[Union[str, os.PathLike]],
+    threshold: Optional[float],
+    paralog: Optional[float],
+    engine: Union[str, os.PathLike] = "pandas",
 ) -> Tuple:
     """
     Filters the original .bed file to produce a custom filtered file
 
     Parameters
     ----------
-        togadir : str | os.PathLike
+        togadir : Union[str, os.PathLike]|Union[str, os.PathLike]
             The path to the TOGA results directory.
-        outdir : str | os.PathLike
+        outdir : Union[str, os.PathLike]|Union[str, os.PathLike]
             The path to the output directory.
         table : pd.DataFrame
             The query table.
@@ -178,7 +179,9 @@ def filter_bed(
 
 
 def get_stats_from_bed(
-    bed_path: str, table: pd.DataFrame | pl.DataFrame, engine: str = "pandas"
+    bed_path: str,
+    table: Union[pd.DataFrame, pl.DataFrame],
+    engine: Union[str, os.PathLike] = "pandas",
 ) -> Tuple[List[Dict], int]:
     """
     Get the stats of a given bed file
