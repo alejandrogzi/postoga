@@ -37,6 +37,7 @@ dependencies = [
     "supply",
     "importlib.resources",
     "polars==1.9.0",
+    "maturin",
 ]
 
 [project.urls]
@@ -69,6 +70,12 @@ xfail_strict = true
 addopts = ["-ra", "--showlocals", "--strict-config", "--strict-markers"]
 filterwarnings = ["ignore::PendingDeprecationWarning"]
 testpaths = ["tests"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.scripts]
+postoga = "postoga.postoga:main"
 
 [tool.hatch.envs.default]
 path = ".env"
