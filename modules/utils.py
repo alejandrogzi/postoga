@@ -133,14 +133,27 @@ def isoform_writer(
         >>> isoform_writer("path/to/output/directory", table, engine="pandas")
     """
 
-    f = os.path.join(outdir, Constants.FileNames.OWNED_ISOFORMS)
+    filename = os.path.join(outdir, Constants.FileNames.OWNED_ISOFORMS)
 
-    # get only gene:transcript pairs
+    # INFO: get only gene:transcript pairs
     if engine != "polars":
-        table.iloc[:, [1, 3]].dropna().to_csv(f, sep="\t", header=None, index=False)
+        with open(filename, "w") as f:
+            for _, row in table.iloc[:, [1, 3, 9]].dropna().iterrows():
+                gene = row.iloc[0]
+                transcript = row.iloc[1]
+                fragments = row.iloc[2]
+
+                if fragments < 1:
+                    f.write(f"{gene}\t{transcript}\n")
+                else:
+                    for i in range(int(fragments)):
+                        f.write(f"{gene}\t{transcript}#FG{i+1}\n")
     else:
         table.select("t_gene", "projection").drop_nulls().write_csv(
-            f, separator="\t", include_header=False, quote_char=""
+            filename, separator="\t", include_header=False, quote_char=""
         )
 
-    return f, f"gene-to-projection hash with {len(table)} entries written to {f}"
+    return (
+        filename,
+        f"gene-to-projection hash with {len(table)} entries written to {filename}",
+    )

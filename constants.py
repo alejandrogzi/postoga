@@ -181,6 +181,7 @@ class Constants:
         PDF = "POSTOGA_REPORT.pdf"
         LENGTHS = "ortholog_lengths.txt"
         TOGA_TABLE = "toga.table"
+        FRAGMENTED_BED = "fragmented_annotation.bed"
 
     class Commands:
         COMMIT = "git rev-parse --short HEAD"

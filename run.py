@@ -7,7 +7,11 @@ import sys
 from constants import Constants
 from logger import Log
 from modules.assembly_stats import busco_completeness, qual_by_ancestral
-from modules.filter_query_annotation import filter_bed, get_stats_from_bed
+from modules.filter_query_annotation import (
+    filter_bed,
+    get_stats_from_bed,
+    unfragment_projections,
+)
 from modules.haplotype_branch import merge_haplotypes
 from modules.make_query_table import query_table
 from modules.utils import isoform_writer
@@ -100,7 +104,10 @@ class TogaDir:
         )
 
         if self.mode != "haplotype":
-            self.table = query_table(self.togadir, self.outdir, self.engine)
+            self.fragmented_table = query_table(self.togadir, self.outdir, self.engine)
+            self.table, self.bed_path = unfragment_projections(
+                self.fragmented_table, self.togadir
+            )
 
             if not self.isoforms:
                 self.isoforms, msg = isoform_writer(self.outdir, self.table)
@@ -111,7 +118,7 @@ class TogaDir:
                 )
 
             if any([self.by_class, self.by_rel, self.threshold, self.para_threshold]):
-                self.bed, self.stats, self.ngenes, self.custom_table = filter_bed(
+                self.bed_path, self.stats, self.ngenes, self.custom_table = filter_bed(
                     self.togadir,
                     self.outdir,
                     self.table,
@@ -119,6 +126,7 @@ class TogaDir:
                     self.by_rel,
                     self.threshold,
                     self.para_threshold,
+                    self.bed_path,
                     self.engine,
                 )
                 self.base_stats, _ = get_stats_from_bed(
@@ -127,9 +135,8 @@ class TogaDir:
                     self.engine,
                 )
             else:
-                self.bed = os.path.join(self.togadir, Constants.FileNames.BED)
                 self.base_stats, self.ngenes = get_stats_from_bed(
-                    self.bed, self.table, self.engine
+                    self.bed_path, self.table, self.engine
                 )
                 self.stats = None
                 self.custom_table = self.table
@@ -137,26 +144,26 @@ class TogaDir:
             if self.to == "gtf":
                 self.gtf = os.path.join(
                     self.outdir,
-                    f"{os.path.splitext(os.path.basename(self.bed))[0]}.gtf",
+                    f"{os.path.splitext(os.path.basename(self.bed_path))[0]}.gtf",
                 )
-                self.gmodel = convert(self.bed, self.gtf, self.isoforms)
+                self.gmodel = convert(self.bed_path, self.gtf, self.isoforms)
                 self.log.record(f"Coversion to GTF file completed! {self.gtf} created!")
             elif self.to == "gff":
                 self.gff = os.path.join(
                     self.outdir,
-                    f"{os.path.splitext(os.path.basename(self.bed))[0]}.gff",
+                    f"{os.path.splitext(os.path.basename(self.bed_path))[0]}.gff",
                 )
-                self.gmodel = convert(self.bed, self.gff, self.isoforms)
+                self.gmodel = convert(self.bed_path, self.gff, self.isoforms)
                 self.log.record(f"Coversion to GFF file completed! {self.gff} created!")
             elif self.to == "bed":
-                self.gmodel = self.bed
+                self.gmodel = self.bed_path
                 self.log.record(
                     f"Skipping conversion to GTF or GFF file. Filtering only the .bed file and writing the results to {self.outdir}!"
                 )
 
             self.ancestral_stats = qual_by_ancestral(
                 self.outdir,
-                self.bed,
+                self.bed_path,
                 self.custom_table,
                 self.q_assembly,
                 self.source,
@@ -170,18 +177,18 @@ class TogaDir:
             if self.extract:
                 if self.extract == "reference":
                     extract_seqs(
-                        self.bed, self.protein, self.extract, self.filtered_protein
+                        self.bed_path, self.protein, self.extract, self.filtered_protein
                     )
                     extract_seqs(
-                        self.bed, self.codon, self.extract, self.filtered_codon
+                        self.bed_path, self.codon, self.extract, self.filtered_codon
                     )
 
                     self.log.record(
                         f"Extracted REFERENCE sequences from your filtered .bed file to {self.filtered_protein} and {self.filtered_codon}"
                     )
                 else:
-                    extract_seqs(self.bed, self.protein, output=self.filtered_protein)
-                    extract_seqs(self.bed, self.codon, output=self.filtered_codon)
+                    extract_seqs(self.bed_path, self.protein, output=self.filtered_protein)
+                    extract_seqs(self.bed_path, self.codon, output=self.filtered_codon)
 
                     self.log.record(
                         f"Extracted QUERY sequences from your filtered .bed file to {self.filtered_protein} and {self.filtered_codon}"

@@ -27,6 +27,7 @@ def filter_bed(
     by_rel: Optional[Union[str, os.PathLike]],
     threshold: Optional[float],
     paralog: Optional[float],
+    bed_path: Union[str, os.PathLike],
     engine: Union[str, os.PathLike] = "pandas",
 ) -> Tuple:
     """
@@ -60,7 +61,7 @@ def filter_bed(
     """
 
     log = Log.connect(outdir, Constants.FileNames.LOG)
-    f = os.path.join(outdir, Constants.FileNames.FILTERED_BED)
+    filtered_bed_path = os.path.join(outdir, Constants.FileNames.FILTERED_BED)
     initial = len(table)
 
     if threshold:
@@ -118,14 +119,12 @@ def filter_bed(
 
     # read the original .bed file and filter it based on the transcripts table
     if engine != "polars":
-        bed = pd.read_csv(
-            os.path.join(togadir, Constants.FileNames.BED), sep="\t", header=None
-        )
+        bed = pd.read_csv(bed_path, sep="\t", header=None)
         bed = bed[bed[3].isin(table["projection"])]
         custom_table = table[table["projection"].isin(bed[3])]
 
         bed.to_csv(
-            f,
+            filtered_bed_path,
             sep="\t",
             header=None,
             index=False,
@@ -137,14 +136,14 @@ def filter_bed(
         ]
     else:
         bed = pl.read_csv(
-            os.path.join(togadir, Constants.FileNames.BED),
+            bed_path,
             separator="\t",
             has_header=False,
         )
         bed = bed.filter(pl.col("column_4").is_in(table["projection"]))
         custom_table = table.filter(pl.col("projection").is_in(bed["projection"]))
 
-        bed.write_csv(f, include_header=False, separator="\t")
+        bed.write_csv(filtered_bed_path, include_header=False, separator="\t")
 
         stats = [
             dict(
@@ -175,7 +174,12 @@ def filter_bed(
 
     [log.record(i) for i in info]
 
-    return f, stats, len(custom_table["reference_gene"].unique()), custom_table
+    return (
+        filtered_bed_path,
+        stats,
+        len(custom_table["reference_gene"].unique()),
+        custom_table,
+    )
 
 
 def get_stats_from_bed(
@@ -235,3 +239,48 @@ def get_stats_from_bed(
         ]
 
     return stats, len(bed_table["reference_gene"].unique())
+
+
+def unfragment_projections(
+    table: pd.DataFrame, togadir: Union[os.PathLike, str]
+) -> Tuple[pd.DataFrame, str]:
+    bed_path = os.path.join(togadir, Constants.FileNames.BED)
+    bed = pd.read_csv(bed_path, sep="\t", header=None)
+
+    projection_count = bed.iloc[:, 3].value_counts()
+    fragments = projection_count[projection_count > 1].index
+
+    # INFO: if there are no fragments, does not make sense to
+    # update table nor bed
+    if len(fragments) > 0:
+        fragment_count = {fg: 0 for fg in fragments}
+        bed.iloc[:, 3] = bed.apply(
+            lambda row: append_fragment_suffix(row, fragment_count), axis=1
+        )
+
+        # INFO: add fragment_count as another column in table called "fragments"
+        table["fragments"] = [
+            fragment_count[projection] if projection in fragment_count.keys() else 0
+            for projection in table["projection"]
+        ]
+
+        bed.to_csv(
+            os.path.join(togadir, Constants.FileNames.FRAGMENTED_BED),
+            sep="\t",
+            header=None,
+            index=False,
+        )
+
+        bed_path = os.path.join(togadir, Constants.FileNames.FRAGMENTED_BED)
+
+    return table, bed_path
+
+
+def append_fragment_suffix(row, counts):
+    val = row[3]
+    if val in counts:
+        count = counts[val]
+        idx = counts[val] = count + 1
+        return f"{val}#FG{idx}"
+    else:
+        return val
