@@ -225,27 +225,45 @@ def make_pd_table(path: Union[str, os.PathLike]) -> pd.DataFrame:
         }
     )
 
-
     # INFO: patch on retro labels!
-    table.reference_transcript = [tx.split('#')[0].split('.')[0] if tx is not np.nan else tx for tx in table.reference_transcript]
-    transcript_to_gene = table.dropna(subset=['reference_gene']).set_index('reference_transcript')['reference_gene'].to_dict()
+    table.reference_transcript = [
+        tx.split("#")[0].split(".")[0] if tx is not np.nan else tx
+        for tx in table.reference_transcript
+    ]
+    transcript_to_gene = (
+        table.dropna(subset=["reference_gene"])
+        .set_index("reference_transcript")["reference_gene"]
+        .to_dict()
+    )
 
-    table['reference_gene'] = table['reference_gene'].fillna(table['reference_transcript'].map(transcript_to_gene))
-    table['query_gene'] = table['query_gene'].fillna(table['reference_transcript'].map(transcript_to_gene))
+    table["reference_gene"] = table["reference_gene"].fillna(
+        table["reference_transcript"].map(transcript_to_gene)
+    )
+    table["query_gene"] = table["query_gene"].fillna(
+        table["reference_transcript"].map(transcript_to_gene)
+    )
 
     # INFO: reading query_annotation.bed!
-    bed = pd.read_csv(os.path.join(path, Constants.FileNames.BED), sep="\t", header=None)
-    transition = bed[[3]].rename(columns={3:"projection"})
+    bed = pd.read_csv(
+        os.path.join(path, Constants.FileNames.BED), sep="\t", header=None
+    )
+    transition = bed[[3]].rename(columns={3: "projection"})
 
-    transition["reference_transcript"] = [p.split('#')[0].split('.')[0] for p in transition.projection]
-    transition["query_gene"] = table['reference_transcript'].map(transcript_to_gene)
-    transition["retro_flag"] = [True if p.split('#')[-1] == 'retro' else False for p in transition.projection]
+    transition["reference_transcript"] = [
+        p.split("#")[0].split(".")[0] for p in transition.projection
+    ]
+    transition["query_gene"] = table["reference_transcript"].map(transcript_to_gene)
+    transition["retro_flag"] = [
+        True if p.split("#")[-1] == "retro" else False for p in transition.projection
+    ]
     transition = transition[transition.retro_flag == True]
-    transition.query_gene = [gene + "#RETRO" if gene is not np.nan else np.nan for gene in transition.query_gene]
+    transition.query_gene = [
+        gene + "#RETRO" if gene is not np.nan else np.nan
+        for gene in transition.query_gene
+    ]
 
-    table = pd.concat([table, transition.iloc[...,[0,2]]])
+    table = pd.concat([table, transition.iloc[..., [0, 2]]])
     table.fillna({"q_gene": MISSING_PLACEHOLDER}, inplace=True)
-
 
     [log.record(i) for i in info]
 
