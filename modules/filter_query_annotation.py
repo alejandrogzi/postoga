@@ -334,9 +334,7 @@ def unfragment_projections(
         bed_path = os.path.join(togadir, Constants.FileNames.FRAGMENTED_BED)
 
     table.to_csv(
-        os.path.join(os.path.join(togadir, "postoga"), Constants.FileNames.TOGA_TABLE),
-        sep="\t",
-        index=False,
+        os.path.join(os.path.join(togadir, "postoga"), Constants.FileNames.TOGA_TABLE), sep="\t", index=False
     )
 
     return table, bed_path
