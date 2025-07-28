@@ -63,9 +63,6 @@ def query_table(
     """
     if engine != "polars":
         table = make_pd_table(path)
-        table.to_csv(
-            os.path.join(outdir, Constants.FileNames.TOGA_TABLE), sep="\t", index=False
-        )
     else:
         table = make_pl_table(path)
         table.write_csv(
@@ -253,16 +250,17 @@ def make_pd_table(path: Union[str, os.PathLike]) -> pd.DataFrame:
         p.split("#")[0].split(".")[0] for p in transition.projection
     ]
     transition["query_gene"] = table["reference_transcript"].map(transcript_to_gene)
-    transition["retro_flag"] = [
-        True if p.split("#")[-1] == "retro" else False for p in transition.projection
-    ]
-    transition = transition[transition.retro_flag == True]
-    transition.query_gene = [
-        gene + "#RETRO" if gene is not np.nan else np.nan
-        for gene in transition.query_gene
+    transition["query_gene"] = [
+        transition.iloc[idx, 2] + "#RETRO"
+        if transition.iloc[idx, 0].split("#")[-1] == "retro"
+        and transition.iloc[idx, 2] is not np.nan
+        else transition.iloc[idx, 2]
+        for idx in transition.index
     ]
 
-    table = pd.concat([table, transition.iloc[..., [0, 2]]])
+    table = pd.concat(
+        [table, transition[~transition.projection.isin(table.projection)]]
+    )
     table.fillna({"q_gene": MISSING_PLACEHOLDER}, inplace=True)
 
     [log.record(i) for i in info]

@@ -187,7 +187,9 @@ class TogaDir:
                         f"Extracted REFERENCE sequences from your filtered .bed file to {self.filtered_protein} and {self.filtered_codon}"
                     )
                 else:
-                    extract_seqs(self.bed_path, self.protein, output=self.filtered_protein)
+                    extract_seqs(
+                        self.bed_path, self.protein, output=self.filtered_protein
+                    )
                     extract_seqs(self.bed_path, self.codon, output=self.filtered_codon)
 
                     self.log.record(
