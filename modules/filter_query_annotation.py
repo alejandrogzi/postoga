@@ -244,6 +244,66 @@ def get_stats_from_bed(
 def unfragment_projections(
     table: pd.DataFrame, togadir: Union[os.PathLike, str]
 ) -> Tuple[pd.DataFrame, str]:
+    """
+    Handles fragmented projections within a BED file by appending unique suffixes
+    to duplicate projection IDs and updating a given DataFrame with fragment counts.
+
+    If a projection ID appears multiple times in the BED file (indicating fragments),
+    this function modifies the BED file by appending '#FGX' (where X is the fragment
+    number) to each instance of the fragmented projection. It also adds a 'fragments'
+    column to the input DataFrame, indicating how many times each projection was
+    fragmented.
+
+    Parameters
+    ----------
+    table : pd.DataFrame
+        The input DataFrame containing a 'projection' column, which will be
+        updated with fragment counts.
+    togadir : Union[os.PathLike, str]
+        The directory where the original BED file is located and where the
+        (potentially) fragmented BED file will be saved.
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - pd.DataFrame: The updated DataFrame with the 'fragments' column.
+        - str: The path to the (potentially) new fragmented BED file.
+
+    Example
+    -------
+    >>> import pandas as pd
+    >>> import os
+    >>> # Assume 'Constants' and 'append_fragment_suffix' are defined
+    >>> # Create a dummy BED file
+    >>> dummy_bed_content = "chr1\\t10\\t20\\tprojA\\t0\\t+\\n" \\
+    ...                     "chr1\\t25\\t35\\tprojB\\t0\\t+\\n" \\
+    ...                     "chr1\\t40\\t50\\tprojA\\t0\\t+\\n" \\
+    ...                     "chr1\\t55\\t65\\tprojC\\t0\\t+\\n"
+    >>> dummy_togadir = "temp_data"
+    >>> os.makedirs(dummy_togadir, exist_ok=True)
+    >>> with open(os.path.join(dummy_togadir, Constants.FileNames.BED), "w") as f:
+    ...     f.write(dummy_bed_content)
+    >>>
+    >>> # Create a dummy table
+    >>> dummy_table = pd.DataFrame({'projection': ['projA', 'projB', 'projC', 'projD'],
+    ...                             'value': [10, 20, 30, 40]})
+    >>>
+    >>> updated_table, bed_path = unfragment_projections(dummy_table, dummy_togadir)
+    >>> print(updated_table)
+    # Expected output (might vary slightly based on full context of Constants):
+    #   projection  value  fragments
+    # 0      projA     10          2
+    # 1      projB     20          0
+    # 2      projC     30          0
+    # 3      projD     40          0
+    >>> print(bed_path)
+    # Expected output: temp_data/fragmented_bed_file.bed
+    >>> # Clean up dummy files
+    >>> os.remove(os.path.join(dummy_togadir, Constants.FileNames.BED))
+    >>> os.remove(os.path.join(dummy_togadir, Constants.FileNames.FRAGMENTED_BED))
+    >>> os.rmdir(dummy_togadir)
+    """
     bed_path = os.path.join(togadir, Constants.FileNames.BED)
     bed = pd.read_csv(bed_path, sep="\t", header=None)
 
@@ -277,6 +337,56 @@ def unfragment_projections(
 
 
 def append_fragment_suffix(row, counts):
+    """
+    Appends a fragment suffix to a projection ID if it is a known fragment.
+
+    This helper function is used within `unfragment_projections` to modify
+    projection IDs in the BED file. If a projection ID (from `row[3]`) is
+    found in the `counts` dictionary (meaning it's a fragmented projection),
+    a suffix like '#FG1', '#FG2', etc., is appended to make it unique.
+    The `counts` dictionary is updated to track the next fragment number.
+
+    Parameters
+    ----------
+    row : pandas.Series
+        A row from a pandas DataFrame (typically a BED file row), where
+        `row[3]` is expected to be the projection ID.
+    counts : dict
+        A dictionary where keys are fragmented projection IDs and values are
+        the current count of how many times that fragment has been encountered.
+        This dictionary is modified in place.
+
+    Returns
+    -------
+    str
+        The modified projection ID with the fragment suffix, or the original
+        projection ID if it's not a fragmented one.
+
+    Example
+    -------
+    >>> # This function is typically used within a pandas .apply() method
+    >>> # Example of how it might be used internally:
+    >>> import pandas as pd
+    >>> counts_dict = {'projA': 0, 'projB': 0}
+    >>>
+    >>> # First occurrence of projA
+    >>> row1 = pd.Series([None, None, None, 'projA', None, None])
+    >>> new_id1 = append_fragment_suffix(row1, counts_dict)
+    >>> print(f"New ID 1: {new_id1}, Counts: {counts_dict}")
+    # Expected: New ID 1: projA#FG1, Counts: {'projA': 1, 'projB': 0}
+    >>>
+    >>> # Second occurrence of projA
+    >>> row2 = pd.Series([None, None, None, 'projA', None, None])
+    >>> new_id2 = append_fragment_suffix(row2, counts_dict)
+    >>> print(f"New ID 2: {new_id2}, Counts: {counts_dict}")
+    # Expected: New ID 2: projA#FG2, Counts: {'projA': 2, 'projB': 0}
+    >>>
+    >>> # A non-fragmented ID
+    >>> row3 = pd.Series([None, None, None, 'projX', None, None])
+    >>> new_id3 = append_fragment_suffix(row3, counts_dict)
+    >>> print(f"New ID 3: {new_id3}, Counts: {counts_dict}")
+    # Expected: New ID 3: projX, Counts: {'projA': 2, 'projB': 0}
+    """
     val = row[3]
     if val in counts:
         count = counts[val]
