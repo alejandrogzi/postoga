@@ -261,7 +261,7 @@ def make_pd_table(path: Union[str, os.PathLike]) -> pd.DataFrame:
     table = pd.concat(
         [table, transition[~transition.projection.isin(table.projection)]]
     )
-    table.fillna({"q_gene": MISSING_PLACEHOLDER}, inplace=True)
+    table.fillna({"query_gene": MISSING_PLACEHOLDER}, inplace=True)
 
     [log.record(i) for i in info]
 
