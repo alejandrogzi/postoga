@@ -184,6 +184,7 @@ def make_pd_table(path: Union[str, os.PathLike]) -> pd.DataFrame:
 
     # INFO: filling query genes
     table.fillna({"q_gene": table["tx_with_chain"].map(query_genes)}, inplace=True)
+    table.fillna({"q_gene": table["entry"].map(query_genes)}, inplace=True)
     table.fillna({"q_gene": table["t_gene"]}, inplace=True)
 
     # INFO: completing projection names
