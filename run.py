@@ -50,6 +50,8 @@ class TogaDir:
             self.to = args.to
             self.log = Log(self.outdir, Constants.FileNames.LOG)
 
+            self.bed = args.bed
+
             self.by_class = args.by_class if args.by_class else None
             self.by_rel = args.by_rel if args.by_rel else None
             self.threshold = args.threshold if args.threshold else None
@@ -104,9 +106,11 @@ class TogaDir:
         )
 
         if self.mode != "haplotype":
-            self.fragmented_table = query_table(self.togadir, self.outdir, self.engine)
+            self.fragmented_table = query_table(
+                self.togadir, self.outdir, self.bed, self.engine
+            )
             self.table, self.bed_path = unfragment_projections(
-                self.fragmented_table, self.togadir
+                self.fragmented_table, self.togadir, self.bed
             )
 
             if not self.isoforms:
@@ -130,7 +134,7 @@ class TogaDir:
                     self.engine,
                 )
                 self.base_stats, _ = get_stats_from_bed(
-                    os.path.join(self.togadir, Constants.FileNames.BED),
+                    os.path.join(self.togadir, self.bed),
                     self.table,
                     self.engine,
                 )
@@ -246,6 +250,15 @@ def base_branch(subparsers, parent_parser):
         type=str,
         choices=["gtf", "gff", "bed"],
         default="gtf",
+    )
+    base_parser.add_argument(
+        "-b",
+        "--bed",
+        help="Specify target .bed file",
+        required=True,
+        type=str,
+        choices=["query_annotation.bed", "query_annotation.with_utrs.bed"],
+        default="query_annotation.bed",
     )
     base_parser.add_argument(
         "-aq",

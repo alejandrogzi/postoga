@@ -43,6 +43,7 @@ MISSING_PLACEHOLDER = "GENE_NOT_FOUND"
 def query_table(
     path: Union[str, os.PathLike],
     outdir: Union[str, os.PathLike],
+    bed: Union[str, os.PathLike],
     engine: str = "pandas",
 ) -> Union[pd.DataFrame, pl.DataFrame]:
     """
@@ -62,7 +63,7 @@ def query_table(
         >>> query_table("path/to/toga/output")
     """
     if engine != "polars":
-        table = make_pd_table(path)
+        table = make_pd_table(path, bed)
     else:
         table = make_pl_table(path)
         table.write_csv(
@@ -130,7 +131,9 @@ def read_pd(
     return orthology, loss, score, inact_muts, query_genes
 
 
-def make_pd_table(path: Union[str, os.PathLike]) -> pd.DataFrame:
+def make_pd_table(
+    path: Union[str, os.PathLike], bed: Union[str, os.PathLike]
+) -> pd.DataFrame:
     """
     Constructs a query table from a TOGA output directory using pandas engine
 
@@ -242,9 +245,7 @@ def make_pd_table(path: Union[str, os.PathLike]) -> pd.DataFrame:
     )
 
     # INFO: reading query_annotation.bed!
-    bed = pd.read_csv(
-        os.path.join(path, Constants.FileNames.BED), sep="\t", header=None
-    )
+    bed = pd.read_csv(os.path.join(path, bed), sep="\t", header=None)
     transition = bed[[3]].rename(columns={3: "projection"})
 
     transition["reference_transcript"] = [

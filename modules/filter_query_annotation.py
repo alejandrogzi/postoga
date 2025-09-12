@@ -242,7 +242,7 @@ def get_stats_from_bed(
 
 
 def unfragment_projections(
-    table: pd.DataFrame, togadir: Union[os.PathLike, str]
+    table: Union[pd.DataFrame, pl.DataFrame], togadir: Union[os.PathLike, str], bed: Union[str, os.PathLike]
 ) -> Tuple[pd.DataFrame, str]:
     """
     Handles fragmented projections within a BED file by appending unique suffixes
@@ -304,7 +304,7 @@ def unfragment_projections(
     >>> os.remove(os.path.join(dummy_togadir, Constants.FileNames.FRAGMENTED_BED))
     >>> os.rmdir(dummy_togadir)
     """
-    bed_path = os.path.join(togadir, Constants.FileNames.BED)
+    bed_path = os.path.join(togadir, bed)
     bed = pd.read_csv(bed_path, sep="\t", header=None)
 
     projection_count = bed.iloc[:, 3].value_counts()
@@ -334,7 +334,9 @@ def unfragment_projections(
         bed_path = os.path.join(togadir, Constants.FileNames.FRAGMENTED_BED)
 
     table.to_csv(
-        os.path.join(os.path.join(togadir, "postoga"), Constants.FileNames.TOGA_TABLE), sep="\t", index=False
+        os.path.join(os.path.join(togadir, "postoga"), Constants.FileNames.TOGA_TABLE),
+        sep="\t",
+        index=False,
     )
 
     return table, bed_path
