@@ -18,7 +18,7 @@ pub mod lines;
 pub mod utils;
 
 #[pyfunction]
-#[pyo3(signature = (bed, output, isoforms=".", gz = false, no_gene = false))]
+#[pyo3(signature = (bed, output, isoforms=".", gz = true, no_gene = false))]
 fn convert(
     py: Python,
     bed: PyObject,
