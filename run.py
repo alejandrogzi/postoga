@@ -273,15 +273,6 @@ def base_branch(subparsers, parent_parser):
         default="gtf",
     )
     base_parser.add_argument(
-        "-b",
-        "--bed",
-        help="Specify target .bed file",
-        required=True,
-        type=str,
-        choices=["query_annotation.bed", "query_annotation.with_utrs.bed"],
-        default="query_annotation.bed",
-    )
-    base_parser.add_argument(
         "-aq",
         "--assembly_qual",
         help="Calculate assembly quality based on a list of genes provided by the user (default: Ancestral_placental.txt)",

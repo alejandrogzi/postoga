@@ -132,7 +132,7 @@ def read_pd(
 
 
 def make_pd_table(
-    path: Union[str, os.PathLike], bed: Union[str, os.PathLike]
+    path: Union[str, os.PathLike],
 ) -> pd.DataFrame:
     """
     Constructs a query table from a TOGA output directory using pandas engine
