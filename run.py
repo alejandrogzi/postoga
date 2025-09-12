@@ -110,7 +110,7 @@ class TogaDir:
                 self.togadir, self.outdir, self.bed, self.engine
             )
             self.table, self.bed_path = unfragment_projections(
-                self.fragmented_table, self.togadir, self.bed
+                self.fragmented_table, self.togadir, self.outdir, self.bed
             )
 
             if not self.isoforms:

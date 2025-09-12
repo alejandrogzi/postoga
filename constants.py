@@ -164,11 +164,6 @@ class Constants:
         FILTERED_PROTEIN = "protein_aln.filtered.fa"
         EXONS = "exon_aln.fa"
         OWNED_ISOFORMS = "postoga_isoforms.txt"
-        FILTERED_BED = "filtered.bed"
-        GTF = f"{BED.split('.')[0]}.gtf"
-        GFF = f"{BED.split('.')[0]}.gff"
-        FILTERED_GTF = f"{FILTERED_BED.split('.')[0]}.gtf"
-        FILTERED_GFF = f"{FILTERED_BED.split('.')[0]}.gff"
         NUCLEOTIDE = "nucleotide.fasta"  # [DEPRECATED IN TOGA2]
         LOG = "postoga.log"
         QUALITY = os.path.join("temp", "transcript_quality.tsv")
@@ -181,7 +176,12 @@ class Constants:
         PDF = "POSTOGA_REPORT.pdf"
         LENGTHS = "ortholog_lengths.txt"
         TOGA_TABLE = "toga.table"
-        FRAGMENTED_BED = "fragmented_annotation.bed"
+        FRAGMENTED_BED = f"{BED.rsplit('.', 1)[0]}.fragmented.bed"
+        FILTERED_BED = f"{BED.rsplit('.', 1)[0]}.filtered.bed"
+        GTF = f"{BED.rsplit('.',1)[0]}.gtf"
+        GFF = f"{BED.rsplit('.',1)[0]}.gff"
+        FILTERED_GTF = f"{FILTERED_BED.split('.')[0]}.gtf"
+        FILTERED_GFF = f"{FILTERED_BED.split('.')[0]}.gff"
 
     class Commands:
         COMMIT = "git rev-parse --short HEAD"
