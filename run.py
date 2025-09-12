@@ -148,7 +148,7 @@ class TogaDir:
             if self.to == "gtf":
                 self.gtf = os.path.join(
                     self.outdir,
-                    f"{os.path.splitext(os.path.basename(self.bed_path))[0]}.gtf",
+                    f"{os.path.splitext(os.path.basename(self.bed_path))[0]}.gtf.gz", # INFO: --gz by default
                 )
                 self.gmodel = convert(self.bed_path, self.gtf, self.isoforms)
                 self.log.record(f"Coversion to GTF file completed! {self.gtf} created!")
