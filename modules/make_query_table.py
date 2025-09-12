@@ -63,7 +63,7 @@ def query_table(
         >>> query_table("path/to/toga/output")
     """
     if engine != "polars":
-        table = make_pd_table(path, bed)
+        table = make_pd_table(path)
     else:
         table = make_pl_table(path)
         table.write_csv(
@@ -245,7 +245,9 @@ def make_pd_table(
     )
 
     # INFO: reading query_annotation.bed!
-    bed = pd.read_csv(os.path.join(path, bed), sep="\t", header=None)
+    bed = pd.read_csv(
+        os.path.join(path, Constants.FileNames.BED), sep="\t", header=None
+    )
     transition = bed[[3]].rename(columns={3: "projection"})
 
     transition["reference_transcript"] = [

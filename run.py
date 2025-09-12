@@ -50,8 +50,6 @@ class TogaDir:
             self.to = args.to
             self.log = Log(self.outdir, Constants.FileNames.LOG)
 
-            self.bed = args.bed
-
             self.by_class = args.by_class if args.by_class else None
             self.by_rel = args.by_rel if args.by_rel else None
             self.threshold = args.threshold if args.threshold else None
@@ -106,11 +104,20 @@ class TogaDir:
         )
 
         if self.mode != "haplotype":
-            self.fragmented_table = query_table(
-                self.togadir, self.outdir, self.bed, self.engine
-            )
+            self.fragmented_table = query_table(self.togadir, self.outdir, self.engine)
             self.table, self.bed_path = unfragment_projections(
-                self.fragmented_table, self.togadir, self.outdir, self.bed
+                self.fragmented_table,
+                self.togadir,
+                self.outdir,
+                Constants.FileNames.BED,
+                True,
+            )
+            _, self.bed_utr_path = unfragment_projections(
+                self.fragmented_table,
+                self.togadir,
+                self.outdir,
+                Constants.FileNames.BED_UTR,
+                False,
             )
 
             if not self.isoforms:
@@ -121,49 +128,63 @@ class TogaDir:
                     f"using custom isoform table provided by the user: {self.isoforms}"
                 )
 
-            if any([self.by_class, self.by_rel, self.threshold, self.para_threshold]):
-                self.bed_path, self.stats, self.ngenes, self.custom_table = filter_bed(
-                    self.togadir,
-                    self.outdir,
-                    self.table,
-                    self.by_class,
-                    self.by_rel,
-                    self.threshold,
-                    self.para_threshold,
-                    self.bed_path,
-                    self.engine,
-                )
-                self.base_stats, _ = get_stats_from_bed(
-                    os.path.join(self.togadir, self.bed),
-                    self.table,
-                    self.engine,
-                )
-            else:
-                self.base_stats, self.ngenes = get_stats_from_bed(
-                    self.bed_path, self.table, self.engine
-                )
-                self.stats = None
-                self.custom_table = self.table
+            for bed_file in [self.bed_path, self.bed_utr_path]:
+                self.log.record(f"currently processing: {bed_file}")
 
-            if self.to == "gtf":
-                self.gtf = os.path.join(
-                    self.outdir,
-                    f"{os.path.splitext(os.path.basename(self.bed_path))[0]}.gtf.gz", # INFO: --gz by default
-                )
-                self.gmodel = convert(self.bed_path, self.gtf, self.isoforms)
-                self.log.record(f"Coversion to GTF file completed! {self.gtf} created!")
-            elif self.to == "gff":
-                self.gff = os.path.join(
-                    self.outdir,
-                    f"{os.path.splitext(os.path.basename(self.bed_path))[0]}.gff",
-                )
-                self.gmodel = convert(self.bed_path, self.gff, self.isoforms)
-                self.log.record(f"Coversion to GFF file completed! {self.gff} created!")
-            elif self.to == "bed":
-                self.gmodel = self.bed_path
-                self.log.record(
-                    f"Skipping conversion to GTF or GFF file. Filtering only the .bed file and writing the results to {self.outdir}!"
-                )
+                if any(
+                    [self.by_class, self.by_rel, self.threshold, self.para_threshold]
+                ):
+                    self.bed_path, self.stats, self.ngenes, self.custom_table = (
+                        filter_bed(
+                            self.togadir,
+                            self.outdir,
+                            self.table,
+                            self.by_class,
+                            self.by_rel,
+                            self.threshold,
+                            self.para_threshold,
+                            bed_file,
+                            self.engine,
+                        )
+                    )
+
+                    self.base_stats, _ = get_stats_from_bed(
+                        os.path.join(self.togadir, bed_file),
+                        self.table,
+                        self.engine,
+                    )
+                else:
+                    self.base_stats, self.ngenes = get_stats_from_bed(
+                        bed_file, self.table, self.engine
+                    )
+                    self.stats = None
+                    self.custom_table = self.table
+
+                self.log.record(f"will try to convert: {bed_file} into gtf/gff")
+
+                if self.to == "gtf":
+                    self.gtf = os.path.join(
+                        self.outdir,
+                        f"{os.path.splitext(os.path.basename(self.bed_path))[0]}.gtf.gz",  # INFO: --gz by default
+                    )
+                    self.gmodel = convert(self.bed_path, self.gtf, self.isoforms)
+                    self.log.record(
+                        f"Coversion to GTF file completed! {self.gtf} created!"
+                    )
+                elif self.to == "gff":
+                    self.gff = os.path.join(
+                        self.outdir,
+                        f"{os.path.splitext(os.path.basename(self.bed_path))[0]}.gff",
+                    )
+                    self.gmodel = convert(self.bed_path, self.gff, self.isoforms)
+                    self.log.record(
+                        f"Coversion to GFF file completed! {self.gff} created!"
+                    )
+                elif self.to == "bed":
+                    self.gmodel = self.bed_path
+                    self.log.record(
+                        f"Skipping conversion to GTF or GFF file. Filtering only the .bed file and writing the results to {self.outdir}!"
+                    )
 
             self.ancestral_stats = qual_by_ancestral(
                 self.outdir,

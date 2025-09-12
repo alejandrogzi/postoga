@@ -61,7 +61,7 @@ def filter_bed(
     """
 
     log = Log.connect(outdir, Constants.FileNames.LOG)
-    filtered_bed_path = os.path.join(outdir, Constants.FileNames.FILTERED_BED)
+    filtered_bed_path = bed_path.replace(".bed", "filtered.bed")
     initial = len(table)
 
     if threshold:
@@ -242,8 +242,12 @@ def get_stats_from_bed(
 
 
 def unfragment_projections(
-    table: Union[pd.DataFrame, pl.DataFrame], togadir: Union[os.PathLike, str], outdir: Union[os.PathLike, str], bed: Union[str, os.PathLike]
-) -> Tuple[pd.DataFrame, str]:
+    table: Union[pd.DataFrame, pl.DataFrame],
+    togadir: Union[os.PathLike, str],
+    outdir: Union[os.PathLike, str],
+    file: str,
+    write_table: bool,
+) -> Tuple[Optional[pd.DataFrame], str]:
     """
     Handles fragmented projections within a BED file by appending unique suffixes
     to duplicate projection IDs and updating a given DataFrame with fragment counts.
@@ -304,7 +308,7 @@ def unfragment_projections(
     >>> os.remove(os.path.join(dummy_togadir, Constants.FileNames.FRAGMENTED_BED))
     >>> os.rmdir(dummy_togadir)
     """
-    bed_path = os.path.join(togadir, bed)
+    bed_path = os.path.join(togadir, file)
     bed = pd.read_csv(bed_path, sep="\t", header=None)
 
     projection_count = bed.iloc[:, 3].value_counts()
@@ -324,22 +328,24 @@ def unfragment_projections(
             for projection in table["projection"]
         ]
 
+        bed_path = os.path.join(togadir, f"{file.rsplit('.', 1)[0]}.fragmented.bed")
         bed.to_csv(
-            os.path.join(togadir, Constants.FileNames.FRAGMENTED_BED),
+            bed_path,
             sep="\t",
             header=None,
             index=False,
         )
 
-        bed_path = os.path.join(togadir, Constants.FileNames.FRAGMENTED_BED)
+    if write_table:
+        table.to_csv(
+            os.path.join(outdir, Constants.FileNames.TOGA_TABLE),
+            sep="\t",
+            index=False,
+        )
 
-    table.to_csv(
-        os.path.join(outdir, Constants.FileNames.TOGA_TABLE), sep="\t", index=False),
-        sep="\t",
-        index=False,
-    )
+        return table, bed_path
 
-    return table, bed_path
+    return None, bed_path
 
 
 def append_fragment_suffix(row, counts):
