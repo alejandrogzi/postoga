@@ -16,7 +16,6 @@ from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 
 from constants import Constants
 from logger import Log
-from modules.utils import shell
 
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"

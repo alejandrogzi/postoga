@@ -22,10 +22,9 @@ The inner constructor is written to /outdir/.toga.table
 """
 
 import os
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, Tuple, Union
 
 import pandas as pd
-import polars as pl
 import numpy as np
 
 from constants import Constants
@@ -42,10 +41,7 @@ MISSING_PLACEHOLDER = "GENE_NOT_FOUND"
 
 def query_table(
     path: Union[str, os.PathLike],
-    outdir: Union[str, os.PathLike],
-    bed: Union[str, os.PathLike],
-    engine: str = "pandas",
-) -> Union[pd.DataFrame, pl.DataFrame]:
+) -> pd.DataFrame:
     """
     Constructs a query table from a TOGA output directory
     considering all possible projections and orthologs.
@@ -62,15 +58,7 @@ def query_table(
     ----------
         >>> query_table("path/to/toga/output")
     """
-    if engine != "polars":
-        table = make_pd_table(path)
-    else:
-        table = make_pl_table(path)
-        table.write_csv(
-            os.path.join(outdir, Constants.FileNames.TOGA_TABLE), separator="\t"
-        )
-
-    return table
+    return make_pd_table(path)
 
 
 def get_median(group: pd.DataFrame) -> float:
@@ -245,9 +233,14 @@ def make_pd_table(
     )
 
     # INFO: reading query_annotation.bed!
-    bed = pd.read_csv(
-        os.path.join(path, Constants.FileNames.BED), sep="\t", header=None
-    )
+    try:
+        bed = pd.read_csv(
+            os.path.join(path, Constants.FileNames.BED), sep="\t", header=None
+        )
+    except:
+        bed = pd.read_csv(
+            os.path.join(path, Constants.FileNames.BED_UTR), sep="\t", header=None
+        )
     transition = bed[[3]].rename(columns={3: "projection"})
 
     transition["reference_transcript"] = [
@@ -270,163 +263,3 @@ def make_pd_table(
     [log.record(i) for i in info]
 
     return table
-
-
-def read_pl(
-    path: Union[str, os.PathLike],
-) -> Tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame, pl.DataFrame]:
-    """
-    Polars reader for TOGA directory
-
-    Parameters:
-    ----------
-        path : str | os.PathLike
-
-    Returns:
-    ----------
-        Tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame, pl.DataFrame]
-
-    Examples:
-    ----------
-        >>> read_pl("path/to/toga/output")
-    """
-    orthology = pl.read_csv(
-        os.path.join(path, Constants.FileNames.ORTHOLOGY), separator="\t"
-    )
-
-    score = pl.read_csv(os.path.join(path, Constants.FileNames.SCORES), separator="\t")
-    score = score.with_columns(
-        (score["transcript"] + "#" + score["chain"]).alias("tx_with_chain")
-    )["tx_with_chain", "pred", "transcript"]
-
-    loss = pl.read_csv(
-        os.path.join(path, Constants.FileNames.LOSS),
-        separator="\t",
-    )
-
-    inact_muts = pl.read_csv(
-        os.path.join(path, Constants.FileNames.INACTIVATING_MUTATIONS),
-        separator="\t",
-    )
-
-    # WARN: dropping paralogs for now!
-    # paras = pl.read_csv(
-    #     os.path.join(path, Constants.FileNames.PARALOGS),
-    #     separator="\t",
-    #     has_header=False,
-    #     new_columns=["transcripts"],
-    # )
-    # paralogs = (
-    #     score.join(paras, on="transcripts")
-    #     .group_by("gene")
-    #     .agg(pl.col("pred").max())
-    #     .rename({"gene": "helper", "pred": "paralog_prob"})
-    # )
-
-    return orthology, loss, score, inact_muts
-
-
-def make_pl_table(path: Union[str, os.PathLike]) -> pl.DataFrame:
-    """
-    Constructs a query table from a TOGA output directory using polars engine
-
-    Parameters:
-    ----------
-        path : str | os.PathLike
-
-    Returns:
-    ----------
-        pl.DataFrame
-
-    Examples:
-    ----------
-        >>> make_pl_table("path/to/toga/output")
-    """
-    orthology, loss, score, inact_muts = read_pl(path)
-
-    loss = (
-        loss.filter(pl.col("projection") == "PROJECTION")
-        .with_columns(
-            [
-                pl.col("transcript").str.split(by=".").list.get(0).alias("helper1"),
-                pl.col("transcript").str.split(by=".").list.get(1).alias("helper2"),
-            ]
-        )
-        .with_columns((pl.col("helper1") + "." + pl.col("helper2")).alias("helper"))
-        .drop("helper1", "helper2")
-    )
-
-    ortho_x_loss = orthology.join(
-        loss, left_on="q_transcript", right_on="transcript", how="full"
-    ).with_columns([pl.col("helper").fill_null(pl.col("t_gene"))])
-
-    table = (
-        ortho_x_loss.join(
-            score, left_on="transcript", right_on="transcripts", how="full"
-        )
-        .with_columns([pl.col("helper").fill_null(pl.col("gene"))])
-        .with_columns(
-            [
-                pl.col("orthology_class")
-                .replace_strict(Constants.ORTHOLOGY_TYPE)
-                .alias("relation"),
-                pl.col("transcripts").fill_null(pl.col("transcript")),
-            ]
-        )
-    )
-
-    isoforms_dict = dict(
-        zip(
-            *table.select("helper", "t_gene")
-            .drop_nulls()
-            .unique()
-            .to_dict(as_series=False)
-            .values()
-        )
-    )
-
-    table = (
-        table.with_columns(
-            pl.col("helper")
-            .replace_strict(isoforms_dict, default="NOT FOUND")
-            .alias("t_gene")
-        )
-        .join(paralogs, on="helper", how="left")
-        .with_columns([pl.col("paralog_prob").fill_null(0)])
-        .with_columns(
-            pl.when(
-                (
-                    pl.col("transcripts").fill_null("-").str.split(".").arr.get(-1).str
-                    == "-1"
-                )
-                & (pl.col("q_gene").fill_null("-") != "-")
-            )
-            .then(1)
-            .otherwise(0)
-            .alias("chain")
-        )
-    )
-
-    medians = (
-        table.filter(
-            (pl.col("chain") != 1)
-            & (pl.col("pred") >= 0)
-            & (pl.col("q_gene").is_null())
-        )
-        .group_by("helper")
-        .agg([pl.col("pred").median().alias("npred")])
-    )
-
-    # missing last step: integrating medians into the table when chain == 1
-
-    return table.select(
-        "t_gene",
-        "helper",
-        "transcripts",
-        "relation",
-        "status",
-        "pred",
-        "q_gene",
-        "paralog_prob",
-        "chain",
-    )

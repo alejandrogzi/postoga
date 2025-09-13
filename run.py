@@ -50,6 +50,8 @@ class TogaDir:
             self.to = args.to
             self.log = Log(self.outdir, Constants.FileNames.LOG)
 
+            self.target = args.target
+
             self.by_class = args.by_class if args.by_class else None
             self.by_rel = args.by_rel if args.by_rel else None
             self.threshold = args.threshold if args.threshold else None
@@ -104,21 +106,42 @@ class TogaDir:
         )
 
         if self.mode != "haplotype":
-            self.fragmented_table = query_table(self.togadir, self.outdir, self.engine)
-            self.table, self.bed_path = unfragment_projections(
-                self.fragmented_table,
-                self.togadir,
-                self.outdir,
-                Constants.FileNames.BED,
-                True,
-            )
-            _, self.bed_utr_path = unfragment_projections(
-                self.fragmented_table,
-                self.togadir,
-                self.outdir,
-                Constants.FileNames.BED_UTR,
-                False,
-            )
+            self.fragmented_table = query_table(self.togadir)
+
+            self.bed_utr_path = None
+            self.bed_path = None
+
+            if self.target == "both":
+                _, self.bed_utr_path = unfragment_projections(
+                    self.fragmented_table,
+                    self.togadir,
+                    self.outdir,
+                    Constants.FileNames.BED_UTR,
+                    False,
+                )
+                self.table, self.bed_path = unfragment_projections(
+                    self.fragmented_table,
+                    self.togadir,
+                    self.outdir,
+                    Constants.FileNames.BED,
+                    True,
+                )
+            elif self.target == "utr":
+                self.table, self.bed_utr_path = unfragment_projections(
+                    self.fragmented_table,
+                    self.togadir,
+                    self.outdir,
+                    Constants.FileNames.BED_UTR,
+                    True,
+                )
+            else:
+                self.table, self.bed_path = unfragment_projections(
+                    self.fragmented_table,
+                    self.togadir,
+                    self.outdir,
+                    Constants.FileNames.BED,
+                    True,
+                )
 
             if not self.isoforms:
                 self.isoforms, msg = isoform_writer(self.outdir, self.table)
@@ -129,6 +152,9 @@ class TogaDir:
                 )
 
             for bed_file in [self.bed_path, self.bed_utr_path]:
+                if bed_file is None:
+                    continue
+
                 self.log.record(f"currently processing: {bed_file}")
 
                 if any(
@@ -165,7 +191,7 @@ class TogaDir:
                 if self.to == "gtf":
                     self.gtf = os.path.join(
                         self.outdir,
-                        f"{os.path.splitext(os.path.basename(self.bed_path))[0]}.gtf.gz",  # INFO: --gz by default
+                        f"{os.path.splitext(os.path.basename(bed_file))[0]}.gtf.gz",  # INFO: --gz by default
                     )
                     self.gmodel = convert(self.bed_path, self.gtf, self.isoforms)
                     self.log.record(
@@ -174,7 +200,7 @@ class TogaDir:
                 elif self.to == "gff":
                     self.gff = os.path.join(
                         self.outdir,
-                        f"{os.path.splitext(os.path.basename(self.bed_path))[0]}.gff",
+                        f"{os.path.splitext(os.path.basename(bed_file))[0]}.gff.gz",
                     )
                     self.gmodel = convert(self.bed_path, self.gff, self.isoforms)
                     self.log.record(
@@ -186,14 +212,24 @@ class TogaDir:
                         f"Skipping conversion to GTF or GFF file. Filtering only the .bed file and writing the results to {self.outdir}!"
                     )
 
-            self.ancestral_stats = qual_by_ancestral(
-                self.outdir,
-                self.bed_path,
-                self.custom_table,
-                self.q_assembly,
-                self.source,
-                self.engine,
-            )
+            if self.bed_path:
+                self.ancestral_stats = qual_by_ancestral(
+                    self.outdir,
+                    self.bed_path,
+                    self.custom_table,
+                    self.q_assembly,
+                    self.source,
+                    self.engine,
+                )
+            else:
+                self.ancestral_stats = qual_by_ancestral(
+                    self.outdir,
+                    self.bed_utr_path,
+                    self.custom_table,
+                    self.q_assembly,
+                    self.source,
+                    self.engine,
+                )
 
             self.completeness_stats = busco_completeness(
                 self.outdir, self.custom_table, self.source, self.phylo, self.engine
@@ -271,6 +307,14 @@ def base_branch(subparsers, parent_parser):
         type=str,
         choices=["gtf", "gff", "bed"],
         default="gtf",
+    )
+    base_parser.add_argument(
+        "-tg",
+        "--target",
+        help="Specify the .bed input file to used by the program",
+        type=str,
+        choices=["bed", "utr", "both"],
+        default="utr",
     )
     base_parser.add_argument(
         "-aq",

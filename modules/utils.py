@@ -7,7 +7,6 @@ import subprocess
 from typing import List, Tuple, Union
 
 import pandas as pd
-import polars as pl
 
 from constants import Constants
 
@@ -44,7 +43,7 @@ def shell(cmd: str) -> str:
 
 def bed_reader(
     bed: Union[str, os.PathLike], engine: str = "pandas"
-) -> Union[pd.DataFrame, pl.DataFrame]:
+) -> pd.DataFrame:
     """
     Reads a .bed file and returns a pandas DataFrame
 
@@ -67,8 +66,6 @@ def bed_reader(
     """
     if engine != "polars":
         return pd.read_csv(bed, sep="\t", header=None)
-    else:
-        return pl.read_csv(bed, separator="\t", has_header=False)
 
 
 def ancestral_reader(ancestral: str, source: str, engine: str = "pandas") -> List:
@@ -94,20 +91,13 @@ def ancestral_reader(ancestral: str, source: str, engine: str = "pandas") -> Lis
     """
     if engine != "polars":
         df = pd.read_csv(ancestral, sep="\t").loc[:, source].to_list()
-    else:
-        df = (
-            pl.read_csv(ancestral, separator="\t")
-            .select(source)
-            .to_dict(as_series=False)
-            .get(source)
-        )
 
     return df
 
 
 def isoform_writer(
     outdir: Union[str, os.PathLike],
-    table: Union[pd.DataFrame, pl.DataFrame],
+    table: pd.DataFrame,
     engine: str = "pandas",
 ) -> Tuple[str, str]:
     """
@@ -148,10 +138,6 @@ def isoform_writer(
                 else:
                     for i in range(int(fragments)):
                         f.write(f"{gene}\t{transcript}#FG{i+1}\n")
-    else:
-        table.select("t_gene", "projection").drop_nulls().write_csv(
-            filename, separator="\t", include_header=False, quote_char=""
-        )
 
     return (
         filename,

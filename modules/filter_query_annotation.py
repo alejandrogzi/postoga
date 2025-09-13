@@ -7,7 +7,6 @@ import os
 from typing import Dict, List, Optional, Tuple, Union
 
 import pandas as pd
-import polars as pl
 
 from constants import Constants
 from logger import Log
@@ -22,7 +21,7 @@ __version__ = "0.9.3-devel"
 def filter_bed(
     togadir: Union[str, os.PathLike],
     outdir: Union[str, os.PathLike],
-    table: Union[pd.DataFrame, pl.DataFrame],
+    table: pd.DataFrame,
     by_class: Optional[Union[str, os.PathLike]],
     by_rel: Optional[Union[str, os.PathLike]],
     threshold: Optional[float],
@@ -67,8 +66,7 @@ def filter_bed(
     if threshold:
         if engine != "polars":
             table = table[table["orthology_probability"] >= float(threshold)]
-        else:
-            table = table.filter(pl.col("orthology_probability") >= threshold)
+
         log.record(
             f"discarded {initial - len(table)} projections with orthology orthology_probabilitys <{threshold}"
         )
@@ -77,8 +75,7 @@ def filter_bed(
         edge = len(table)
         if engine != "polars":
             table = table[table["status"].isin(by_class.split(","))]
-        else:
-            table = table.filter(pl.col("status").is_in(by_class.split(",")))
+
         log.record(
             f"discarded {edge - len(table)} projections with classes other than {by_class}"
         )
@@ -87,8 +84,7 @@ def filter_bed(
         edge = len(table)
         if engine != "polars":
             table = table[table["orthology_relation"].isin(by_rel.split(","))]
-        else:
-            table = table.filter(pl.col("orthology_relation").is_in(by_rel.split(",")))
+
         log.record(
             f"discarded {edge - len(table)} projections with orthology_relationships other than {by_rel}"
         )
@@ -97,20 +93,6 @@ def filter_bed(
         if engine != "polars":
             table = table.groupby("reference_transcript").filter(
                 lambda x: (x["orthology_probability"] > float(paralog)).sum() <= 1
-            )
-        else:
-            table = table.filter(
-                pl.col("reference_transcript").is_in(
-                    table.group_by("reference_transcript")
-                    .agg(
-                        [
-                            (pl.col("orthology_probability") > paralog)
-                            .sum()
-                            .alias("count_above_paralog")
-                        ]
-                    )
-                    .filter(pl.col("count_above_paralog") <= 1)["helper"]
-                )
             )
 
         log.record(
@@ -134,35 +116,6 @@ def filter_bed(
             custom_table["status"].value_counts().to_dict(),
             custom_table["orthology_relation"].value_counts().to_dict(),
         ]
-    else:
-        bed = pl.read_csv(
-            bed_path,
-            separator="\t",
-            has_header=False,
-        )
-        bed = bed.filter(pl.col("column_4").is_in(table["projection"]))
-        custom_table = table.filter(pl.col("projection").is_in(bed["projection"]))
-
-        bed.write_csv(filtered_bed_path, include_header=False, separator="\t")
-
-        stats = [
-            dict(
-                zip(
-                    *table.group_by("status")
-                    .agg(pl.len())
-                    .to_dict(as_series=False)
-                    .values()
-                )
-            ),
-            dict(
-                zip(
-                    *table.group_by("orthology_relation")
-                    .agg(pl.len())
-                    .to_dict(as_series=False)
-                    .values()
-                )
-            ),
-        ]
 
     info = [
         f"kept {len(bed)} projections after filters, discarded {initial - len(bed)}.",
@@ -184,7 +137,7 @@ def filter_bed(
 
 def get_stats_from_bed(
     bed_path: str,
-    table: Union[pd.DataFrame, pl.DataFrame],
+    table: pd.DataFrame,
     engine: Union[str, os.PathLike] = "pandas",
 ) -> Tuple[List[Dict], int]:
     """
@@ -217,32 +170,12 @@ def get_stats_from_bed(
             bed_table["status"].value_counts().to_dict(),
             bed_table["orthology_relation"].value_counts().to_dict(),
         ]
-    else:
-        bed_table = table.filter(pl.col("projection").is_in(bed["column_4"]))
-        stats = [
-            dict(
-                zip(
-                    *table.group_by("status")
-                    .agg(pl.len())
-                    .to_dict(as_series=False)
-                    .values()
-                )
-            ),
-            dict(
-                zip(
-                    *table.group_by("orthology_relation")
-                    .agg(pl.len())
-                    .to_dict(as_series=False)
-                    .values()
-                )
-            ),
-        ]
 
     return stats, len(bed_table["reference_gene"].unique())
 
 
 def unfragment_projections(
-    table: Union[pd.DataFrame, pl.DataFrame],
+    table: pd.DataFrame,
     togadir: Union[os.PathLike, str],
     outdir: Union[os.PathLike, str],
     file: str,

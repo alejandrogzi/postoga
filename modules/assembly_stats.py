@@ -15,7 +15,6 @@ import os
 from typing import Dict, List, Tuple, Union
 
 import pandas as pd
-import polars as pl
 
 from constants import Constants
 from logger import Log
@@ -30,7 +29,7 @@ __version__ = "0.9.3-devel"
 def qual_by_ancestral(
     outdir: Union[str, os.PathLike],
     bed: Union[str, os.PathLike],
-    table: Union[pd.DataFrame, pl.DataFrame],
+    table: pd.DataFrame,
     assembly_qual: str,
     source: str,
     engine: str = "pandas",
@@ -78,15 +77,6 @@ def qual_by_ancestral(
 
         overlap = genes[genes["reference_gene"].isin(ancestral)]
         stats = overlap["status"].value_counts().to_dict()
-    else:
-        genes = table.filter(pl.col("projection").is_in(bed["column_4"])).unique(
-            subset="reference_gene", keep="first"
-        )
-
-        overlap = genes.filter(pl.col("reference_gene").is_in(ancestral))
-        stats = dict(
-            zip(*table.group_by("status").len().to_dict(as_series=False).values())
-        )
 
     log.record(
         f"number of ancestral genes/custom genes ({len(ancestral)}) in query: {len(overlap)}, {len(overlap)/len(ancestral)*100:.2f}% overlap"
@@ -99,7 +89,7 @@ def qual_by_ancestral(
 def overlap_busco(
     outdir: Union[str, os.PathLike],
     db: List[str],
-    table: Union[pd.DataFrame, pl.DataFrame],
+    table: pd.DataFrame,
     src: str,
     engine: str = "pandas",
 ) -> List[Tuple[str, float]]:
@@ -140,10 +130,6 @@ def overlap_busco(
         if engine != "polars":
             odb_df = pd.read_csv(odb_path, sep="\t")
             odb_df = odb_df.loc[odb_df[src].dropna().index]
-        else:
-            odb_df = pl.read_csv(odb_path, separator="\t").filter(
-                pl.col(src).drop_nulls()
-            )
 
         log.record(
             f"number of genes in {odb} database with {src} nomenclature: {len(odb_df)}"
@@ -157,7 +143,7 @@ def overlap_busco(
 
 def busco_completeness(
     outdir: Union[str, os.PathLike],
-    table: Union[pd.DataFrame, pl.DataFrame],
+    table: pd.DataFrame,
     src: str,
     phylo: str,
     engine: str = "pandas",
