@@ -50,6 +50,8 @@ fn convert_to_gxf(
     gz: bool,
     no_gene: bool,
 ) {
+    println!("Converting {} to {}...", bed.display(), output.display());
+
     rayon::ThreadPoolBuilder::new()
         .num_threads(num_cpus::get() as usize)
         .build()
@@ -73,6 +75,15 @@ fn convert_to_gxf(
         .filter_map(|record| match filetype {
             "gff" | "gff3" => to_gxf::<b'='>(record, &imap).ok(),
             "gtf" => to_gxf::<b' '>(record, &imap).ok(),
+            "gz" => match output
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .and_then(|s| s.rsplit('.').next())
+            {
+                Some("gff") | Some("gff3") => to_gxf::<b'='>(record, &imap).ok(),
+                Some("gtf") => to_gxf::<b' '>(record, &imap).ok(),
+                _ => panic!("ERROR: Invalid output file type -> {:?}. Tried to match its extension and failed", output),
+            },
             _ => None,
         })
         .flatten()
