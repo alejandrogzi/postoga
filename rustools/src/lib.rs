@@ -81,6 +81,17 @@ fn convert_to_gxf(
     let mut blocks = match filetype {
         "gff" | "gff3" => utils::combine_maps_par::<b'='>(&imap, &gene_track),
         "gtf" => utils::combine_maps_par::<b' '>(&imap, &gene_track),
+        "gz" => {
+            match output
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .and_then(|s| s.rsplit('.').next())
+            {
+                Some("gff") | Some("gff3") => utils::combine_maps_par::<b'='>(&imap, &gene_track),
+                Some("gtf") => utils::combine_maps_par::<b' '>(&imap, &gene_track),
+                _ => panic!("ERROR: Invalid output file type -> {:?}. Tried to match its extension and failed", output),
+            }
+        }
         _ => panic!("Invalid output file type"),
     };
     blocks.extend(results);
