@@ -193,7 +193,7 @@ class TogaDir:
                         self.outdir,
                         f"{os.path.splitext(os.path.basename(bed_file))[0]}.gtf.gz",  # INFO: --gz by default
                     )
-                    self.gmodel = convert(self.bed_path, self.gtf, self.isoforms)
+                    self.gmodel = convert(bed_file, self.gtf, self.isoforms)
                     self.log.record(
                         f"Coversion to GTF file completed! {self.gtf} created!"
                     )
@@ -202,7 +202,7 @@ class TogaDir:
                         self.outdir,
                         f"{os.path.splitext(os.path.basename(bed_file))[0]}.gff.gz",
                     )
-                    self.gmodel = convert(self.bed_path, self.gff, self.isoforms)
+                    self.gmodel = convert(bed_file, self.gff, self.isoforms)
                     self.log.record(
                         f"Coversion to GFF file completed! {self.gff} created!"
                     )

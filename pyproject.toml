@@ -36,7 +36,6 @@ dependencies = [
     "matplotlib==3.8.0",
     "supply",
     "importlib.resources",
-    "polars==1.9.0",
     "maturin",
 ]
 
