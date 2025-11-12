@@ -12,13 +12,13 @@ to pre-process files for downstream analysis.
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "alejandrxgzi@gmail.com"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.9.3-devel"
+__version__ = "0.10"
 
 
 def main():
-    from run import TogaDir, parser
+    from run import TogaDir, parse_args
 
-    args = parser()
+    args = parse_args()
     TogaDir(args).run()
 
 

@@ -2,3 +2,7 @@ __pycache__/
 test_out/
 _postoga.test.log
 TEST/
+.venv/
+.ruff_cache/
+AGENTS.md
+TESTS/

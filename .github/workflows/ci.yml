@@ -8,32 +8,63 @@ on:
   merge_group:
 
 jobs:
-  test:
+  style:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Ruff
+        run: python -m pip install --upgrade pip ruff
+      - name: Ruff lint
+        run: ruff check .
+      - name: Ruff format check
+        run: ruff format --check .
+
+  cli-smoke:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11"]
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v2
+      - name: Install project dependencies
+        run: uv pip install --system -e .
+      - name: Create virtualenv
+        run: uv venv
+      - name: Activate virtualenv
+        run: source .venv/bin/activate
+      - name: Install dependencies
+        run: uv pip install '.'
+      - name: Build rustools
+        run: cd rustools && maturin develop --release && cd ..
+      - name: Smoke test CLI
+        run: ./postoga.py --help
 
-      - name: Set up Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-
-      - name: Install Hatch
+  setup-script:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v2
+      - name: Install maturin
+        run: uv tool install maturin
+      - name: Prepare environment
+        run: chmod +x setup_postoga.sh
+      - name: Run setup script
+        run: ./setup_postoga.sh
+      - name: Validate virtualenv
+        shell: bash
         run: |
-          pipx install hatch
-          pipx install maturin
-
-      - name: Configure
-        shell: bash
-        run: echo y | hatch run configure
-
-      - name: Run tests
-        shell: bash
-        run: hatch run test
+          source .venv/bin/activate
+          ./postoga.py --help

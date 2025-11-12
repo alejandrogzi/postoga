@@ -1,265 +1,500 @@
-#!/usr/bin/env python3
-
 """
-Module to create a query table directly from a TOGA output.
-
-This module would expect the following the files within the
-TOGA output directory:
-
-.
-├── meta
-│   ├── classification_results
-│   │   ├── orthology_scores.tsv
-|   ├── paralogous_projections.tsv
-│   └── orthology_resolution
-│       └── orthology_classification.tsv
-|
-└── results
-    ├── loss_summary.tsv
-    └── orthology_classification.tsv
-
-The inner constructor is written to /outdir/.toga.table
+This module processes orthology classification, loss summary, and scoring data
+to create a unified table of gene orthology relationships.
 """
 
+import logging
 import os
-from typing import Dict, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import pandas as pd
-import numpy as np
-
-from constants import Constants
-from logger import Log
 
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.9.3-devel"
+__version__ = "0.10"
+
+ORTHOLOGY_CLASSIFICATION_COLS = [
+    "reference_gene",
+    "reference_transcript",
+    "query_gene",
+    "query_transcript",
+    "orthology_class",
+]
+
+LOSS_SUMMARY_COLS = [
+    "level",
+    "query_transcript",
+    "orthology_status",
+]
+
+ORTHOLOGY_SCORE_COLS = [
+    "transcript",
+    "chain",
+    "orthology_score",
+]
+
+BED12_COLS = [
+    "chr",
+    "start",
+    "end",
+    "id",
+    "score",
+    "strand",
+    "cds_start",
+    "cds_end",
+    "rgb",
+    "exon_count",
+    "exon_sizes",
+    "exon_starts",
+]
+
+OUTPUT_TABLE_COLS = [
+    "reference_gene",
+    "reference_transcript",
+    "query_gene",
+    "query_transcript",
+    "orthology_class",
+    "orthology_status",
+    "orthology_score",
+]
+
+PathLike = Union[str, os.PathLike]
+LOGGER = logging.getLogger("postoga")
 
 
-MISSING_PLACEHOLDER = "GENE_NOT_FOUND"
-
-
-def query_table(
-    path: Union[str, os.PathLike],
+def load_tsv_with_columns(
+    filepath: PathLike, column_names: List[str], skip_header: bool = True
 ) -> pd.DataFrame:
     """
-    Constructs a query table from a TOGA output directory
-    considering all possible projections and orthologs.
+    Load a TSV file with specified column names.
 
-    Parameters:
-    ----------
-        path : str | os.PathLike
-
-    Returns:
-    ----------
-        pd.DataFrame
-
-    Examples:
-    ----------
-        >>> query_table("path/to/toga/output")
-    """
-    return make_pd_table(path)
-
-
-def get_median(group: pd.DataFrame) -> float:
-    """
-    Get the median of a group
-
-    Parameters:
-    ----------
-        group : pd.DataFrame
+    Args:
+        filepath: Path to the TSV file
+        column_names: List of column names to assign
+        skip_header: Whether to skip the first row
 
     Returns:
-    ----------
-        float
+        DataFrame with the loaded data
 
-    Examples:
-    ----------
-        >>> get_median(group)
+    Example:
+        >>> df = load_tsv_with_columns("data.tsv", ["col1", "col2"])
     """
-    return group.loc[:, "pred"].median()
-
-
-def read_pd(
-    path: Union[str, os.PathLike],
-) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, Dict[str, str]]:
-    """
-    Pandas reader for TOGA directory
-
-    Parameters:
-    ----------
-        path : str | os.PathLike
-
-    Returns:
-    ----------
-        Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]
-
-    Examples:
-    ----------
-        >>> read_pd("path/to/toga/output")
-    """
-    orthology = pd.read_csv(os.path.join(path, Constants.FileNames.ORTHOLOGY), sep="\t")
-
-    score = pd.read_csv(os.path.join(path, Constants.FileNames.SCORES), sep="\t")
-    score["tx_with_chain"] = score["transcript"] + "#" + score["chain"].astype(str)
-    score = score[["tx_with_chain", "pred", "transcript"]]
-
-    loss = pd.read_csv(os.path.join(path, Constants.FileNames.LOSS), sep="\t")
-
-    inact_muts = pd.read_csv(
-        os.path.join(path, Constants.FileNames.INACTIVATING_MUTATIONS), sep="\t"
+    return pd.read_csv(
+        filepath, sep="\t", names=column_names, skiprows=1 if skip_header else 0
     )
 
-    query_genes = (
-        pd.read_csv(os.path.join(path, Constants.FileNames.QUERY_GENES), sep="\t")
-        .set_index("projection")
-        .to_dict()["query_gene"]
+
+def load_orthology_classification(filepath: PathLike) -> pd.DataFrame:
+    """
+    Load orthology classification data.
+
+    Args:
+        filepath: Path to orthology_classification.tsv
+
+    Returns:
+        DataFrame with orthology classifications
+
+    Example:
+        >>> df = load_orthology_classification("orthology_classification.tsv")
+    """
+    return load_tsv_with_columns(filepath, ORTHOLOGY_CLASSIFICATION_COLS)
+
+
+def load_and_process_scores(filepath: PathLike) -> pd.DataFrame:
+    """
+    Load and process orthology scores, creating query_transcript identifiers.
+
+    Args:
+        filepath: Path to orthology_scores.tsv
+
+    Returns:
+        DataFrame with query_transcript, orthology_score, and transcript columns
+
+    Example:
+        >>> df = load_and_process_scores("orthology_scores.tsv")
+    """
+    scores = load_tsv_with_columns(filepath, ORTHOLOGY_SCORE_COLS)
+    scores["query_transcript"] = (
+        scores["transcript"] + "#" + scores["chain"].astype(str)
     )
+    return scores[["query_transcript", "orthology_score", "transcript"]]
 
-    return orthology, loss, score, inact_muts, query_genes
 
-
-def make_pd_table(
-    path: Union[str, os.PathLike],
+def load_and_filter_loss_summary(
+    filepath: PathLike, level_filter: str = "PROJECTION"
 ) -> pd.DataFrame:
     """
-    Constructs a query table from a TOGA output directory using pandas engine
+    Load loss summary data and filter by level.
 
-    Parameters:
-    ----------
-        path : str | os.PathLike
+    Args:
+        filepath: Path to loss_summary.tsv
+        level_filter: Level to filter by (default: "PROJECTION")
 
     Returns:
-    ----------
-        pd.DataFrame
+        DataFrame with filtered loss summary and r_transcript column
 
-    Examples:
-    ----------
-        >>> make_pd_table("path/to/toga/output")
+    Example:
+        >>> df = load_and_filter_loss_summary("loss_summary.tsv")
     """
-    log = Log.connect(path, Constants.FileNames.LOG)
+    loss = load_tsv_with_columns(filepath, LOSS_SUMMARY_COLS)
+    loss = loss.query(f"level == '{level_filter}'").copy()
+    loss["r_transcript"] = loss["query_transcript"].str.split("#").str[:2].str.join("#")
+    return loss
 
-    orthology, loss, score, inact_muts, query_genes = read_pd(path)
 
-    # INFO: subsets loss to consider only projections
-    loss = loss.query("level == 'PROJECTION'").copy()
-    loss["helper"] = loss["entry"].str.rsplit(".", n=1).str[0]
+def load_query_genes_mapping(filepath: PathLike) -> Dict[str, str]:
+    """
+    Load query genes mapping from projection to query_gene.
 
-    ortho_x_loss = pd.merge(
-        orthology, loss, left_on="q_transcript", right_on="entry", how="outer"
-    ).fillna({"helper": orthology["t_gene"]})
+    Args:
+        filepath: Path to query_genes.tsv
 
-    table = pd.merge(
-        ortho_x_loss, score, left_on="entry", right_on="tx_with_chain", how="outer"
-    )
-    table.fillna({"helper": table["transcript"]}, inplace=True)
+    Returns:
+        Dictionary mapping projection IDs to query gene names
 
-    # INFO: create a new column with a rename orthology relationship
-    table["relation"] = table["orthology_class"].map(Constants.ORTHOLOGY_TYPE)
-    table.fillna({"tx_with_chain": table["transcript"]}, inplace=True)
-
-    # INFO: creates a dictionary: transcript -> gene
-    isoforms_dict = table.dropna().set_index("helper")["t_gene"].to_dict()
-    table.fillna({"t_gene": table["helper"].map(isoforms_dict)}, inplace=True)
-
-    # INFO: adds inactivating mutation data
-    inact_muts = inact_muts.groupby("projection", as_index=False).agg(
-        {"mut_id": lambda x: list(x)}
-    )
-    inact_muts["inact_mut"] = [True for x in range(len(inact_muts))]
-    table = pd.merge(
-        table, inact_muts, left_on="tx_with_chain", right_on="projection", how="outer"
+    Example:
+        >>> mapping = load_query_genes_mapping("query_genes.tsv")
+    """
+    return (
+        pd.read_csv(filepath, sep="\t").set_index("projection")["query_gene"].to_dict()
     )
 
-    table.fillna({"inact_mut": False, "pred": 0.0}, inplace=True)
 
-    # INFO: filling query genes
-    table.fillna({"q_gene": table["tx_with_chain"].map(query_genes)}, inplace=True)
-    table.fillna({"q_gene": table["entry"].map(query_genes)}, inplace=True)
-    table.fillna({"q_gene": table["t_gene"]}, inplace=True)
+def load_query_annotation(filepath: PathLike) -> pd.DataFrame:
+    """
+    Load query annotation BED file and extract helper transcript IDs.
 
-    # INFO: completing projection names
-    table.fillna({"tx_with_chain": table["entry"]}, inplace=True)
+    Args:
+        filepath: Path to query_annotation.bed
 
-    info = [
-        f"found {len(table)} projections, {len(table['helper'].unique())} unique transcripts, {len(table['t_gene'].unique())} unique genes",
-        f"class stats: {table['status'].value_counts().to_dict()}",
-        f"relation stats: {table['relation'].value_counts().to_dict()}",
-        # f"joined fragments predictions: {len(table[table['chain'] == 1])}",
-    ]
+    Returns:
+        DataFrame with BED12 data and helper column
 
-    table = table[
-        [
-            "t_gene",
-            "q_gene",
-            "helper",
-            "tx_with_chain",
-            "relation",
-            "status",
-            "pred",
-            "inact_mut",
-            "mut_id",
-        ]
-    ].rename(
-        columns={
-            "t_gene": "reference_gene",
-            "q_gene": "query_gene",
-            "helper": "reference_transcript",
-            "tx_with_chain": "projection",
-            "relation": "orthology_relation",
-            "status": "status",
-            "pred": "orthology_probability",
-            "inact_mut": "has_inact_mut",
-            "mut_id": "inact_mut_id",
-        }
+    Example:
+        >>> df = load_query_annotation("query_annotation.bed")
+    """
+    annotation = pd.read_csv(filepath, sep="\t", header=None, names=BED12_COLS)
+    annotation["helper"] = annotation["id"].str.split("$").str[0]
+    return annotation
+
+
+def create_gene_mapping(
+    df: pd.DataFrame, key_col: str, value_col: str
+) -> Dict[str, str]:
+    """
+    Create a mapping dictionary from two columns, dropping NaN values.
+
+    Args:
+        df: Source DataFrame
+        key_col: Column name for dictionary keys
+        value_col: Column name for dictionary values
+
+    Returns:
+        Dictionary mapping keys to values
+
+    Example:
+        >>> mapping = create_gene_mapping(df, 'transcript', 'gene')
+    """
+    return df[[key_col, value_col]].dropna().set_index(key_col)[value_col].to_dict()
+
+
+def fill_gene_columns_with_mapping(
+    df: pd.DataFrame,
+    mapping: Dict[str, str],
+    transcript_col: str = "reference_transcript",
+) -> pd.DataFrame:
+    """
+    Fill NaN values in reference_gene and query_gene using a transcript mapping.
+
+    Args:
+        df: DataFrame to update
+        mapping: Dictionary mapping transcripts to genes
+        transcript_col: Column to use for mapping lookup
+
+    Returns:
+        DataFrame with filled gene columns
+
+    Example:
+        >>> df = fill_gene_columns_with_mapping(df, gene_map)
+    """
+    df = df.copy()
+    df["reference_gene"] = df["reference_gene"].fillna(df[transcript_col].map(mapping))
+    df["query_gene"] = df["query_gene"].fillna(df[transcript_col].map(mapping))
+    return df
+
+
+def merge_and_fill_orthology_data(
+    orthology: pd.DataFrame, loss: pd.DataFrame, scores: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Merge orthology, loss, and score data with intelligent filling of missing values.
+
+    Args:
+        orthology: Orthology classification DataFrame
+        loss: Loss summary DataFrame
+        scores: Orthology scores DataFrame
+
+    Returns:
+        Merged DataFrame with filled reference and query information
+
+    Example:
+        >>> merged = merge_and_fill_orthology_data(orth_df, loss_df, score_df)
+    """
+    # Initial merge with loss data
+    table = pd.merge(orthology, loss, on="query_transcript", how="outer").fillna(
+        {"reference_transcript": loss["r_transcript"]}
     )
 
-    # INFO: patch on retro labels!
-    table.reference_transcript = [
-        tx.split("#")[0].split(".")[0] if tx is not np.nan else tx
-        for tx in table.reference_transcript
-    ]
-    transcript_to_gene = (
-        table.dropna(subset=["reference_gene"])
-        .set_index("reference_transcript")["reference_gene"]
-        .to_dict()
-    )
+    # Fill genes using reference_transcript mapping
+    gene_mapping = create_gene_mapping(table, "reference_transcript", "reference_gene")
+    table = fill_gene_columns_with_mapping(table, gene_mapping)
 
-    table["reference_gene"] = table["reference_gene"].fillna(
-        table["reference_transcript"].map(transcript_to_gene)
-    )
-    table["query_gene"] = table["query_gene"].fillna(
-        table["reference_transcript"].map(transcript_to_gene)
-    )
+    # Merge with scores
+    table = table.merge(scores, on="query_transcript", how="outer")
+    table = table.fillna({"reference_transcript": table["transcript"]})
 
-    # INFO: reading query_annotation.bed!
-    try:
-        bed = pd.read_csv(
-            os.path.join(path, Constants.FileNames.BED), sep="\t", header=None
-        )
-    except:
-        bed = pd.read_csv(
-            os.path.join(path, Constants.FileNames.BED_UTR), sep="\t", header=None
-        )
-    transition = bed[[3]].rename(columns={3: "projection"})
-
-    transition["reference_transcript"] = [
-        p.split("#")[0].split(".")[0] for p in transition.projection
-    ]
-    transition["query_gene"] = table["reference_transcript"].map(transcript_to_gene)
-    transition["query_gene"] = [
-        transition.iloc[idx, 2] + "#RETRO"
-        if transition.iloc[idx, 0].split("#")[-1] == "retro"
-        and transition.iloc[idx, 2] is not np.nan
-        else transition.iloc[idx, 2]
-        for idx in transition.index
-    ]
-
-    table = pd.concat(
-        [table, transition[~transition.projection.isin(table.projection)]]
-    )
-    table.fillna({"query_gene": MISSING_PLACEHOLDER}, inplace=True)
-
-    [log.record(i) for i in info]
+    # Fill genes again with updated mapping
+    gene_mapping = create_gene_mapping(table, "reference_transcript", "reference_gene")
+    table = fill_gene_columns_with_mapping(table, gene_mapping)
 
     return table
+
+
+def apply_query_gene_overrides(
+    df: pd.DataFrame, query_genes_mapping: Dict[str, str]
+) -> pd.DataFrame:
+    """
+    Override query_gene values where query_transcript exists in mapping.
+
+    Args:
+        df: DataFrame with query_transcript and query_gene columns
+        query_genes_mapping: Dictionary mapping transcripts to gene names
+
+    Returns:
+        DataFrame with overridden query_gene values
+
+    Example:
+        >>> df = apply_query_gene_overrides(df, gene_mapping)
+    """
+    df = df.copy()
+    mask = df["query_transcript"].isin(query_genes_mapping.keys())
+    df.loc[mask, "query_gene"] = df.loc[mask, "query_transcript"].map(
+        query_genes_mapping
+    )
+    return df
+
+
+def extract_isoform_mappings(
+    annotation: pd.DataFrame, orthology_table: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Extract isoform to query_gene mappings from annotation and orthology data.
+
+    Args:
+        annotation: Query annotation DataFrame with 'id' and 'helper' columns
+        orthology_table: Orthology table with query_gene and query_transcript
+
+    Returns:
+        DataFrame mapping isoform IDs to query genes
+
+    Example:
+        >>> isoforms = extract_isoform_mappings(annot_df, orth_df)
+    """
+    return annotation[["id", "helper"]].merge(
+        orthology_table[["query_gene", "query_transcript"]],
+        left_on="helper",
+        right_on="query_transcript",
+    )[["id", "query_gene"]]
+
+
+def table_builder(
+    query_annotation: Union[str, PathLike],
+    loss_summary: Union[str, PathLike],
+    orthology_classification: Union[str, PathLike],
+    orthology_scores: Union[str, PathLike],
+    query_genes: Union[str, PathLike],
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Execute the complete orthology data processing pipeline.
+
+    Args:
+        toga_dir: Base directory containing all input files
+
+    Returns:
+        Tuple of (orthology_table, isoform_mappings)
+        - orthology_table: Complete merged orthology data
+        - isoform_mappings: Isoform ID to query gene mappings
+
+    Example:
+        >>> table, isoforms = process_orthology_pipeline("./data")
+    """
+    # Load all data sources
+    orthology = load_orthology_classification(orthology_classification)
+    scores = load_and_process_scores(orthology_scores)
+    loss = load_and_filter_loss_summary(loss_summary)
+    query_genes_mapping = load_query_genes_mapping(query_genes)
+    query_annotation = load_query_annotation(query_annotation)
+
+    # Process and merge orthology data
+    orthology_table = merge_and_fill_orthology_data(orthology, loss, scores)
+    orthology_table = apply_query_gene_overrides(orthology_table, query_genes_mapping)
+    orthology_table = orthology_table[OUTPUT_TABLE_COLS]
+
+    # Extract isoform mappings
+    isoform_mappings = extract_isoform_mappings(query_annotation, orthology_table)
+
+    return orthology_table, isoform_mappings
+
+
+def filter_query_annotation(
+    table: pd.DataFrame,
+    by_orthology_class: Optional[Union[str, os.PathLike]],
+    by_orthology_status: Optional[Union[str, os.PathLike]],
+    by_orthology_score: Optional[float],
+    by_paralog_score: Optional[float],
+    query_annotation: Union[str, os.PathLike],
+    outdir: Union[os.PathLike[str], str],
+) -> Tuple[Union[str, os.PathLike], pd.DataFrame]:
+    """
+    Filters the original .bed file to produce a custom filtered file
+
+    Parameters
+    ----------
+        togadir : Union[str, os.PathLike]|Union[str, os.PathLike]
+            The path to the TOGA results directory.
+        outdir : Union[str, os.PathLike]|Union[str, os.PathLike]
+            The path to the output directory.
+        table : pd.DataFrame
+            The query table.
+        by_class : list
+            The classes to filter the table by.
+        by_rel : list
+            The orthology_relationships to filter the table by.
+        threshold : float
+            The orthology orthology_probability threshold.
+        paralog : float
+            The paralogy orthology_probability threshold.
+
+    Returns
+    -------
+        tuple
+            The filtered table and the custom table.
+
+    Example
+    -------
+        >>> from modules.filter_query_annotation import filter_bed
+    """
+
+    tmp = query_annotation.replace(".bed", ".filtered.bed")
+    initial_table_size = len(table)
+    LOGGER.debug("Starting BED filtering with %d projections", initial_table_size)
+
+    if by_orthology_score is not None:
+        edge = len(table)
+        table = table[table["orthology_score"] >= float(by_orthology_score)]
+        discarded = edge - len(table)
+        if discarded:
+            LOGGER.debug(
+                "Discarded %d projections with orthology_score <%s",
+                discarded,
+                by_orthology_score,
+            )
+
+    if by_orthology_class:
+        edge = len(table)
+        allowed_classes = [
+            klass.strip() for klass in by_orthology_class.split(",") if klass.strip()
+        ]
+        table = table[table["orthology_class"].isin(allowed_classes)]
+        discarded = edge - len(table)
+        if discarded:
+            LOGGER.debug(
+                "Discarded %d projections outside classes %s",
+                discarded,
+                ",".join(allowed_classes),
+            )
+
+    if by_orthology_status:
+        edge = len(table)
+        allowed_relationships = [
+            relation.strip()
+            for relation in by_orthology_status.split(",")
+            if relation.strip()
+        ]
+        table = table[table["orthology_status"].isin(allowed_relationships)]
+        discarded = edge - len(table)
+        if discarded:
+            LOGGER.debug(
+                "Discarded %d projections outside relationships %s",
+                discarded,
+                ",".join(allowed_relationships),
+            )
+
+    if by_paralog_score is not None:
+        edge = len(table)
+        if "orthology_score" not in table.columns:
+            LOGGER.warning(
+                "Paralog filtering skipped: 'orthology_score' column not found."
+            )
+        else:
+            table = table.groupby("reference_transcript").filter(
+                lambda x: (x["orthology_score"] > float(by_paralog_score)).sum() <= 1
+            )
+            discarded = edge - len(table)
+            if discarded:
+                LOGGER.debug(
+                    "Discarded %d transcripts with paralog score >%s",
+                    discarded,
+                    by_paralog_score,
+                )
+
+    # read the original .bed file and filter it based on the transcripts table
+    query_annotation_df = load_query_annotation(query_annotation)
+    filtered_query_annotation = query_annotation_df[
+        query_annotation_df["helper"].isin(table["query_transcript"])
+    ]
+    filtered_table = table[
+        table["query_transcript"].isin(filtered_query_annotation["helper"])
+    ]
+
+    kept = len(filtered_query_annotation)
+    discarded = initial_table_size - kept
+    unique_transcripts = (
+        filtered_table["reference_transcript"].nunique()
+        if "reference_transcript" in filtered_table
+        else 0
+    )
+    unique_genes = (
+        filtered_table["reference_gene"].nunique()
+        if "reference_gene" in filtered_table
+        else 0
+    )
+    class_stats = (
+        filtered_table["orthology_class"].value_counts().to_dict()
+        if "orthology_class" in filtered_table
+        else {}
+    )
+    status_stats = (
+        filtered_table["orthology_status"].value_counts().to_dict()
+        if "orthology_status" in filtered_table
+        else {}
+    )
+
+    filtered_query_annotation[BED12_COLS].to_csv(
+        tmp, sep="\t", index=False, header=False
+    )
+
+    info_messages = [
+        f"kept {kept} projections after filters, discarded {discarded}.",
+        f"""{kept} projections from {unique_transcripts} unique tx and {
+            unique_genes
+        } genes""",
+        f"class stats of new bed: {class_stats}",
+        f"orthology_relation stats of new bed: {status_stats}",
+        f"filtered bed file written to {tmp}",
+    ]
+    for message in info_messages:
+        LOGGER.info(message)
+
+    return (tmp, filtered_table)
