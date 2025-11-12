@@ -59,3 +59,9 @@
 - Adds license
 - Drops --skip argument and adds --plot argument to plot stats [currently broken]
 - Adds additional BUSCO and completeness stats to the main log file
+
+# postoga 0.10.0-devel [BREAKING CHANGE]
+- Replaces the ad-hoc logger with a shared `PostogaLogger`, adds a `-L/--level` flag (debug, info, warn, off), and pipes filter statistics directly into the logging stream.
+- `--depure` now deletes every POSTOGA_* run artifact from the parent output directory before creating a new run, with warnings if files cannot be removed.
+- Added `setup_postoga.sh` to bootstrap a `uv` virtual environment, install Python dependencies, and execute `maturin develop --release` for `rustools`.
+- `filter_query_annotation()` now reports per-filter discard counts plus final projection/orthology summaries so CLI and `postoga.log` users can audit thresholds easily.

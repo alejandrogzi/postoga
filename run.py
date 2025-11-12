@@ -1,26 +1,103 @@
 #!/usr/bin/env python3
 
 import argparse
+import glob
+import logging
 import os
-import sys
+import random
+import shutil
+import time
+from logging.handlers import RotatingFileHandler
+from typing import ClassVar, Optional, Tuple, Union
 
 from constants import Constants
-from logger import Log
-from modules.assembly_stats import busco_completeness, qual_by_ancestral
-from modules.filter_query_annotation import (
-    filter_bed,
-    get_stats_from_bed,
-    unfragment_projections,
-)
-from modules.haplotype_branch import merge_haplotypes
-from modules.make_query_table import query_table
-from modules.utils import isoform_writer
-from rustools import convert, extract_seqs
+from modules.make_query_table import filter_query_annotation, table_builder
+from rustools import convert
 
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.9.3-devel"
+__version__ = "0.10"
+
+
+class PostogaLogger:
+    """Configure a shared console/file logger for the CLI."""
+
+    NAME = "postoga"
+    _LOG_FILE_ATTR = "_postoga_log_file"
+    LEVELS: ClassVar = {
+        "debug": logging.DEBUG,
+        "info": logging.INFO,
+        "warn": logging.WARNING,
+        "off": logging.CRITICAL + 1,
+    }
+
+    @staticmethod
+    def _formatter() -> logging.Formatter:
+        return logging.Formatter(
+            "%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+
+    @classmethod
+    def _resolve_level(cls, level: Optional[str]) -> Tuple[int, bool]:
+        normalized = (level or "info").lower()
+        if normalized not in cls.LEVELS:
+            normalized = "info"
+        level_value = cls.LEVELS[normalized]
+        disabled = normalized == "off"
+        return level_value, disabled
+
+    @classmethod
+    def _apply_level(
+        cls, logger: logging.Logger, level_value: int, disabled: bool
+    ) -> None:
+        logger.setLevel(level_value)
+        logger.disabled = disabled
+        for handler in logger.handlers:
+            handler.setLevel(level_value)
+
+    @classmethod
+    def get_logger(
+        cls,
+        log_file: Optional[Union[str, os.PathLike]] = None,
+        level: Optional[str] = None,
+    ) -> logging.Logger:
+        level_value, disabled = cls._resolve_level(level)
+        logger = logging.getLogger(cls.NAME)
+        if not logger.handlers:
+            stream_handler = logging.StreamHandler()
+            stream_handler.setFormatter(cls._formatter())
+            logger.addHandler(stream_handler)
+            logger.propagate = False
+
+        cls._apply_level(logger, level_value, disabled)
+
+        if log_file:
+            log_file = os.path.abspath(log_file)
+            if not any(
+                isinstance(handler, RotatingFileHandler)
+                and getattr(handler, cls._LOG_FILE_ATTR, None) == log_file
+                for handler in logger.handlers
+            ):
+                file_handler = RotatingFileHandler(
+                    log_file,
+                    maxBytes=5_000_000,
+                    backupCount=2,
+                )
+                file_handler.setFormatter(cls._formatter())
+                setattr(file_handler, cls._LOG_FILE_ATTR, log_file)
+                file_handler.setLevel(level_value)
+                logger.addHandler(file_handler)
+            else:
+                for handler in logger.handlers:
+                    if (
+                        isinstance(handler, RotatingFileHandler)
+                        and getattr(handler, cls._LOG_FILE_ATTR, None) == log_file
+                    ):
+                        handler.setLevel(level_value)
+
+        return logger
 
 
 class TogaDir:
@@ -29,6 +106,19 @@ class TogaDir:
     def __init__(self, args: argparse.Namespace) -> None:
         """
         Constructs all the necessary attributes for the TogaDir object.
+
+        A TogaDir object should expect the following dir structure from
+        the user:
+
+            ├── inactivating_mutations.tsv
+            ├── loss_summary.tsv
+            ├── orthology_classification.tsv
+            ├── orthology_scores.tsv
+            |── query_genes.tsv
+            ├── protein_aln.fa.gz [ only if --extract is set ]
+            ├── nucleotide.fa.gz [ only if --extract is set ]
+            ├── query_annotation.bed
+            └── query_annotation.with_utrs.bed
 
         Parameters:
         ----------
@@ -39,47 +129,274 @@ class TogaDir:
         ----------
         None
         """
-
+        self.log_level = args.log_level
+        self.logger = PostogaLogger.get_logger(level=self.log_level)
         self.args = args
-        self.mode = args.mode
-        self.outdir = os.path.abspath(args.outdir)
+        self.togadir = args.togadir
 
-        if args.mode != "haplotype":
-            """The default branch of postoga"""
-            self.togadir = args.togadir
-            self.to = args.to
-            self.log = Log(self.outdir, Constants.FileNames.LOG)
+        self.hash = self.__c_hash__()
+        self.timestamp = time.strftime("%Y%m%d_%H%M%S")
 
-            self.target = args.target
-
-            self.by_class = args.by_class if args.by_class else None
-            self.by_rel = args.by_rel if args.by_rel else None
-            self.threshold = args.threshold if args.threshold else None
-            self.para_threshold = args.paralog if args.paralog else None
-
-            self.engine = args.engine
-            self.q_assembly = args.assembly_qual
-            self.species = args.species
-            self.source = args.source
-            self.phylo = args.phylo
-            self.plot = args.plot
-            self.isoforms = args.isoforms
-            self.extract = args.extract
-
-            self.codon = os.path.join(self.togadir, Constants.FileNames.CODON)
-            self.protein = os.path.join(self.togadir, Constants.FileNames.PROTEIN)
-            self.filtered_codon = os.path.join(
-                self.outdir, Constants.FileNames.FILTERED_CODON
-            )
-            self.filtered_protein = os.path.join(
-                self.outdir, Constants.FileNames.FILTERED_PROTEIN
+        if args.outdir is None:
+            self.outdir: Union[str, os.PathLike] = os.path.abspath(
+                os.path.join(
+                    self.togadir,
+                    f"{Constants.FileNames.POSTOGA_OUTPUT_DIRECTORY}_{self.hash}_{self.timestamp}",
+                )
             )
         else:
-            """The haplotype branch of postoga"""
-            self.togadirs = args.haplotype_path.split(",")
-            self.rule = args.rule.split(">")
-            self.source = args.source
-            self.log = Log(self.outdir, Constants.FileNames.LOG)
+            self.outdir = os.path.abspath(
+                os.path.join(
+                    args.outdir,
+                    f"{Constants.FileNames.POSTOGA_OUTPUT_DIRECTORY}_{self.hash}_{self.timestamp}",
+                )
+            )
+
+        self.logger.debug(
+            "Initialized run with outdir=%s, togadir=%s", self.outdir, self.togadir
+        )
+
+        # INFO: setting filters
+        self.by_orthology_class = args.orthology_class
+        self.by_orthology_status = args.orthology_status
+        self.by_orthology_score = args.orthology_score
+        self.by_paralog_score = args.min_paralog_score
+
+        # INFO: setting modes
+        self.extract = args.extract
+        self.only_table = args.only_table
+        self.only_convert = args.only_convert
+        self.convert_to = args.to
+        self.isoforms = args.with_isoforms
+        self.depure = args.depure
+        self.filter_bed = any(
+            [
+                self.by_orthology_class,
+                self.by_orthology_status,
+                self.by_orthology_score,
+                self.by_paralog_score,
+            ]
+        )
+
+        # INFO: .bed class attributes [ mandatory ]
+        if (
+            os.path.isfile(os.path.join(self.togadir, Constants.FileNames.BED_UTR))
+            and args.bed_type == "utr"
+        ):
+            self.query_annotation = os.path.join(
+                self.togadir, Constants.FileNames.BED_UTR
+            )
+        elif (
+            os.path.isfile(os.path.join(self.togadir, Constants.FileNames.BED))
+            and args.bed_type == "bed"
+        ):
+            self.query_annotation = os.path.join(self.togadir, Constants.FileNames.BED)
+        else:
+            self.logger.error("No .bed file found in %s", self.togadir)
+            raise FileNotFoundError(f"ERROR: no .bed file found in {self.togadir}!")
+
+        # INFO: class attributes to build toga.table.gz [ only mandatory if not --with-isoforms ]
+        self.loss_summary = os.path.join(self.togadir, Constants.FileNames.LOSS)
+        self.orthology_classification = os.path.join(
+            self.togadir, Constants.FileNames.ORTHOLOGY
+        )
+        self.orthology_scores = os.path.join(self.togadir, Constants.FileNames.SCORES)
+        self.query_genes = os.path.join(self.togadir, Constants.FileNames.QUERY_GENES)
+
+        # INFO: asserts existence of required files
+        self.__check()
+
+    def __check(self) -> None:
+        """
+        Checks if the required files are present in the toga directory.
+
+        Raises:
+        -------
+        FileNotFoundError
+            If any of the required files is not present.
+
+        Returns:
+        --------
+        None
+        """
+        if not os.path.isdir(self.togadir):
+            self.logger.error("TOGA directory %s is missing", self.togadir)
+            raise FileNotFoundError(f"ERROR: {self.togadir} is not a directory!")
+
+        # INFO: .bed file assertion
+        if not os.path.isfile(self.query_annotation):
+            self.logger.error("Missing query annotation %s", self.query_annotation)
+            raise FileNotFoundError(f"ERROR: {self.query_annotation} is not a file!")
+        if not os.path.isfile(self.loss_summary):
+            self.logger.error("Missing loss summary %s", self.loss_summary)
+            raise FileNotFoundError(f"ERROR: {self.loss_summary} is not a file!")
+        if not os.path.isfile(self.orthology_classification):
+            self.logger.error(
+                "Missing orthology classification %s", self.orthology_classification
+            )
+            raise FileNotFoundError(
+                f"ERROR: {self.orthology_classification} is not a file!"
+            )
+        if not os.path.isfile(self.orthology_scores):
+            self.logger.error("Missing orthology scores %s", self.orthology_scores)
+            raise FileNotFoundError(f"ERROR: {self.orthology_scores} is not a file!")
+        if not os.path.isfile(self.query_genes):
+            self.logger.error("Missing query genes %s", self.query_genes)
+            raise FileNotFoundError(f"ERROR: {self.query_genes} is not a file!")
+
+        # INFO: isoforms assertion
+        if self.isoforms is not None:
+            if not os.path.isfile(self.isoforms):
+                self.logger.error("Custom isoform file %s not found", self.isoforms)
+                raise FileNotFoundError(f"ERROR: {self.isoforms} is not a file!")
+
+        # INFO: extract assertion
+        if self.extract:
+            if not os.path.isfile(
+                os.path.join(self.togadir, Constants.FileNames.CODON)
+            ):
+                self.logger.error(
+                    "Extract requested but codon alignment %s is missing",
+                    os.path.join(self.togadir, Constants.FileNames.CODON),
+                )
+                raise FileNotFoundError(
+                    f"ERROR: {os.path.join(self.togadir, Constants.FileNames.CODON)} is not a file!"
+                )
+            if not os.path.isfile(
+                os.path.join(self.togadir, Constants.FileNames.PROTEIN)
+            ):
+                self.logger.error(
+                    "Extract requested but protein alignment %s is missing",
+                    os.path.join(self.togadir, Constants.FileNames.PROTEIN),
+                )
+                raise FileNotFoundError(
+                    f"ERROR: {os.path.join(self.togadir, Constants.FileNames.PROTEIN)} is not a file!"
+                )
+
+        return
+
+    def __c_hash__(self) -> str:
+        """
+        Returns a 5-digit hash of the current run
+
+        Returns:
+        ----------
+        int
+            The hash of the current run
+        """
+        CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        return "".join(random.choices(CHARSET, k=5))
+
+    def __depure(self) -> None:
+        """
+        Remove any trace of other postoga runs/files
+
+        Returns:
+        ----------
+        None
+        """
+        parent_dir = os.path.dirname(os.path.abspath(self.outdir))
+        patterns = [
+            f"{Constants.FileNames.POSTOGA_OUTPUT_DIRECTORY}_*",
+            Constants.FileNames.POSTOGA_OUTPUT_DIRECTORY,
+            Constants.FileNames.POSTOGA_OUTPUT_DIRECTORY.lower(),
+            Constants.FileNames.LOG,
+            Constants.FileNames.TOGA_TABLE,
+            f"{Constants.FileNames.TOGA_TABLE}.gz",
+            Constants.FileNames.FILTERED_GTF,
+            Constants.FileNames.GTF,
+            Constants.FileNames.FILTERED_GFF,
+            Constants.FileNames.GFF,
+            Constants.FileNames.FRAGMENTED_BED,
+            Constants.FileNames.FILTERED_BED,
+        ]
+
+        self.logger.info("Depuring previous outputs in %s", parent_dir)
+        for pattern in patterns:
+            for candidate in glob.glob(os.path.join(parent_dir, pattern)):
+                if not os.path.exists(candidate):
+                    continue
+                try:
+                    if os.path.isdir(candidate):
+                        shutil.rmtree(candidate)
+                        self.logger.debug("Removed directory %s", candidate)
+                    else:
+                        os.remove(candidate)
+                        self.logger.debug("Removed file %s", candidate)
+                except OSError as exc:
+                    self.logger.warning(
+                        "Could not remove %s while depuring: %s", candidate, exc
+                    )
+
+        return
+
+    def __write_isoforms(self) -> Union[str, os.PathLike]:
+        """
+        Write isoforms to a file.
+
+        Args:
+            isoforms: Isoforms to write
+
+        Returns:
+            None
+        """
+        target = os.path.join(self.outdir, "isoforms.tsv")
+        self.logger.debug("Writing computed isoforms to %s", target)
+        self.isoforms[["query_gene", "id"]].to_csv(
+            target,
+            sep="\t",
+            index=False,
+            header=False,
+        )
+
+        return target
+
+    def __write_table(self) -> None:
+        """
+        Write toga.table to a file.
+
+        Returns:
+        ----------
+        None
+        """
+        target = os.path.join(self.outdir, Constants.FileNames.TOGA_TABLE)
+        self.logger.info("Writing %s with %d rows", target, len(self.table))
+        self.table.to_csv(
+            target,
+            sep="\t",
+            index=False,
+            header=True,
+            compression="gzip",
+        )
+
+    def __convert(self) -> None:
+        """
+        Convert toga.table to gtf/gff.
+
+        Returns:
+        ----------
+        None
+        """
+        if self.convert_to == "gtf":
+            self.logger.info("Converting BED to GTF")
+            self.gtf = os.path.join(
+                self.outdir,
+                f"{os.path.splitext(os.path.basename(self.query_annotation))[0]}.gtf.gz",
+            )
+            self.gene_model = convert(self.query_annotation, self.gtf, self.isoforms)
+        elif self.convert_to == "gff":
+            self.logger.info("Converting BED to GFF")
+            self.gff = os.path.join(
+                self.outdir,
+                f"{os.path.splitext(os.path.basename(self.query_annotation))[0]}.gff.gz",
+            )
+            self.gene_model = convert(self.query_annotation, self.gff, self.isoforms)
+        else:
+            self.logger.warning(
+                "Conversion target %s is not supported", self.convert_to
+            )
+
+        return
 
     def run(self) -> None:
         """
@@ -93,297 +410,149 @@ class TogaDir:
         ----------
         >>> TogaDir(args).run()
         """
+        if self.depure:
+            self.__depure()
 
-        os.mkdir(self.outdir) if not os.path.isdir(self.outdir) else sys.exit(
-            f"Error: {self.outdir} already exists!"
+        os.makedirs(self.outdir, exist_ok=True)
+        self.logger = PostogaLogger.get_logger(
+            os.path.join(self.outdir, Constants.FileNames.LOG), level=self.log_level
         )
+        self.logger.info("postoga started with args: %s", vars(self.args))
 
-        self.log.start()
-        self.log.intro()
-        self.log.record(f"postoga started!")
-        self.log.record(
-            f"running in mode {self.mode} with arguments: {vars(self.args)}"
+        self.table, isoforms = table_builder(
+            self.query_annotation,
+            self.loss_summary,
+            self.orthology_classification,
+            self.orthology_scores,
+            self.query_genes,
         )
+        self.logger.info("Loaded table with %d projections", len(self.table))
 
-        if self.mode != "haplotype":
-            self.fragmented_table = query_table(self.togadir)
+        if not self.isoforms:
+            self.isoforms = isoforms
 
-            self.bed_utr_path = None
-            self.bed_path = None
+            if not self.only_table:
+                self.isoforms = self.__write_isoforms()
+        else:
+            self.logger.debug("Using user-supplied isoforms at %s", self.isoforms)
 
-            if self.target == "both":
-                _, self.bed_utr_path = unfragment_projections(
-                    self.fragmented_table,
-                    self.togadir,
-                    self.outdir,
-                    Constants.FileNames.BED_UTR,
-                    False,
-                )
-                self.table, self.bed_path = unfragment_projections(
-                    self.fragmented_table,
-                    self.togadir,
-                    self.outdir,
-                    Constants.FileNames.BED,
-                    True,
-                )
-            elif self.target == "utr":
-                self.table, self.bed_utr_path = unfragment_projections(
-                    self.fragmented_table,
-                    self.togadir,
-                    self.outdir,
-                    Constants.FileNames.BED_UTR,
-                    True,
-                )
-            else:
-                self.table, self.bed_path = unfragment_projections(
-                    self.fragmented_table,
-                    self.togadir,
-                    self.outdir,
-                    Constants.FileNames.BED,
-                    True,
-                )
-
-            if not self.isoforms:
-                self.isoforms, msg = isoform_writer(self.outdir, self.table)
-                self.log.record(msg)
-            else:
-                self.log.record(
-                    f"using custom isoform table provided by the user: {self.isoforms}"
-                )
-
-            for bed_file in [self.bed_path, self.bed_utr_path]:
-                if bed_file is None:
-                    continue
-
-                self.log.record(f"currently processing: {bed_file}")
-
-                if any(
-                    [self.by_class, self.by_rel, self.threshold, self.para_threshold]
-                ):
-                    self.bed_path, self.stats, self.ngenes, self.custom_table = (
-                        filter_bed(
-                            self.togadir,
-                            self.outdir,
-                            self.table,
-                            self.by_class,
-                            self.by_rel,
-                            self.threshold,
-                            self.para_threshold,
-                            bed_file,
-                            self.engine,
-                        )
-                    )
-
-                    self.base_stats, _ = get_stats_from_bed(
-                        os.path.join(self.togadir, bed_file),
-                        self.table,
-                        self.engine,
-                    )
-                else:
-                    self.base_stats, self.ngenes = get_stats_from_bed(
-                        bed_file, self.table, self.engine
-                    )
-                    self.stats = None
-                    self.custom_table = self.table
-
-                self.log.record(f"will try to convert: {bed_file} into gtf/gff")
-
-                if self.to == "gtf":
-                    self.gtf = os.path.join(
-                        self.outdir,
-                        f"{os.path.splitext(os.path.basename(bed_file))[0]}.gtf.gz",  # INFO: --gz by default
-                    )
-                    self.gmodel = convert(bed_file, self.gtf, self.isoforms)
-                    self.log.record(
-                        f"Coversion to GTF file completed! {self.gtf} created!"
-                    )
-                elif self.to == "gff":
-                    self.gff = os.path.join(
-                        self.outdir,
-                        f"{os.path.splitext(os.path.basename(bed_file))[0]}.gff.gz",
-                    )
-                    self.gmodel = convert(bed_file, self.gff, self.isoforms)
-                    self.log.record(
-                        f"Coversion to GFF file completed! {self.gff} created!"
-                    )
-                elif self.to == "bed":
-                    self.gmodel = self.bed_path
-                    self.log.record(
-                        f"Skipping conversion to GTF or GFF file. Filtering only the .bed file and writing the results to {self.outdir}!"
-                    )
-
-            if self.bed_path:
-                self.ancestral_stats = qual_by_ancestral(
-                    self.outdir,
-                    self.bed_path,
-                    self.custom_table,
-                    self.q_assembly,
-                    self.source,
-                    self.engine,
-                )
-            else:
-                self.ancestral_stats = qual_by_ancestral(
-                    self.outdir,
-                    self.bed_utr_path,
-                    self.custom_table,
-                    self.q_assembly,
-                    self.source,
-                    self.engine,
-                )
-
-            self.completeness_stats = busco_completeness(
-                self.outdir, self.custom_table, self.source, self.phylo, self.engine
+        if any(
+            [
+                self.by_orthology_class,
+                self.by_orthology_status,
+                self.by_orthology_score,
+                self.by_paralog_score,
+            ]
+        ):
+            self.filtered_query_annotation, self.custom_table = filter_query_annotation(
+                self.table,
+                self.by_orthology_class,
+                self.by_orthology_status,
+                self.by_orthology_score,
+                self.by_paralog_score,
+                self.query_annotation,
+                self.outdir,
             )
 
-            if self.extract:
-                if self.extract == "reference":
-                    extract_seqs(
-                        self.bed_path, self.protein, self.extract, self.filtered_protein
-                    )
-                    extract_seqs(
-                        self.bed_path, self.codon, self.extract, self.filtered_codon
-                    )
-
-                    self.log.record(
-                        f"Extracted REFERENCE sequences from your filtered .bed file to {self.filtered_protein} and {self.filtered_codon}"
-                    )
-                else:
-                    extract_seqs(
-                        self.bed_path, self.protein, output=self.filtered_protein
-                    )
-                    extract_seqs(self.bed_path, self.codon, output=self.filtered_codon)
-
-                    self.log.record(
-                        f"Extracted QUERY sequences from your filtered .bed file to {self.filtered_protein} and {self.filtered_codon}"
-                    )
-
-            if not self.plot:
-                self.log.record("skipping plotting and only filtering the .bed file")
-
-            self.log.close()
-
+            self.query_annotation = self.filtered_query_annotation
+            self.table = self.custom_table
+            self.logger.info(
+                "Applied filters (class=%s, rel=%s, score=%s, paralog=%s); %d rows remain",
+                self.by_orthology_class,
+                self.by_orthology_status,
+                self.by_orthology_score,
+                self.by_paralog_score,
+                len(self.table),
+            )
         else:
-            hap_classes = merge_haplotypes(self.togadirs, self.source, self.rule)
-            self.log.close()
+            self.logger.debug("No filters applied to query annotation")
+
+        if self.only_table:
+            self.logger.info("only-table flag detected; skipping conversion step")
+            self.__write_table()
+            return
+        elif self.only_convert:
+            self.logger.info("only-convert flag detected; skipping table rebuild")
+            self.__convert()
+            return
+        else:
+            self.__write_table()
+            self.__convert()
+            self.logger.info("postoga run finished successfully")
+
+        return
 
 
-def base_branch(subparsers, parent_parser):
-    base_parser = subparsers.add_parser(
-        "base", help="Base mode", parents=[parent_parser]
-    )
-    base_parser.add_argument(
+def parse_args() -> argparse.Namespace:
+    """Argument parser for postoga"""
+    app = argparse.ArgumentParser(add_help=False)
+
+    app.add_argument(
         "--togadir",
         "-td",
         help="Path to TOGA results directory",
         required=True,
         type=str,
     )
-    base_parser.add_argument(
+    app.add_argument(
         "-bc",
-        "--by-class",
-        help="Filter parameter to only include certain orthology classes (I, PI, UL, M, PM, L, UL)",
+        "--by-orthology-status",
+        dest="orthology_status",
+        help="Filter parameter to only include certain orthology classes (FI, I, PI, UL, M, PM, L, UL)",
         required=False,
         type=str,
     )
-    base_parser.add_argument(
+    app.add_argument(
         "-br",
-        "--by-rel",
+        "--by-orthology-class",
+        dest="orthology_class",
         help="Filter parameter to only include certain orthology relationships (o2o, o2m, m2m, m2m, o2z)",
         required=False,
         type=str,
     )
-    base_parser.add_argument(
-        "-th",
-        "--threshold",
+    app.add_argument(
+        "-bs",
+        "--by-orthology-score",
+        dest="orthology_score",
         help="Filter parameter to preserve orthology scores greater or equal to a given threshold (0.0 - 1.0)",
         required=False,
         type=float,
     )
-    base_parser.add_argument(
+    app.add_argument(
         "-to",
         "--to",
         help="Specify the conversion format for .bed (query_annotation/filtered) file (gtf, gff3) or just keep it as .bed (bed)",
-        required=True,
+        required=False,
         type=str,
         choices=["gtf", "gff", "bed"],
         default="gtf",
     )
-    base_parser.add_argument(
+    app.add_argument(
         "-tg",
         "--target",
+        dest="bed_type",
         help="Specify the .bed input file to used by the program",
         type=str,
-        choices=["bed", "utr", "both"],
+        choices=["bed", "utr"],
         default="utr",
     )
-    base_parser.add_argument(
-        "-aq",
-        "--assembly_qual",
-        help="Calculate assembly quality based on a list of genes provided by the user (default: Ancestral_placental.txt)",
-        required=False,
-        type=str,
-        default=Constants.FileNames.ANCESTRAL,
-    )
-    base_parser.add_argument(
-        "-sp",
-        "--species",
-        help="Species name to be used as a reference for the assembly quality calculation (default: human)",
-        required=False,
-        choices=["human", "mouse", "chicken"],
-        type=str,
-        default=Constants.SPECIES_DEFAULT,
-    )
-    base_parser.add_argument(
-        "-src",
-        "--source",
-        help="Source of the ancestral gene names (default: ENSG)",
-        required=False,
-        choices=["ensembl", "gene_name", "entrez"],
-        type=str,
-        default=Constants.SRC_DEFAULT,
-    )
-    base_parser.add_argument(
-        "-phy",
-        "--phylo",
-        help="Phylogenetic group of your species (default: mammals)",
-        required=False,
-        choices=["mammals", "birds"],
-        type=str,
-        default=Constants.PHYLO_DEFAULT,
-    )
-    base_parser.add_argument(
-        "-p",
-        "--plot",
-        help="Flag to plot statistics about the filtered genes (default: False)",
-        required=False,
-        default=False,
-        action="store_true",
-    )
-    base_parser.add_argument(
-        "-par",
-        "--paralog",
+    app.add_argument(
+        "-bp",
+        "--by-paralog-score",
+        dest="min_paralog_score",
         help="Filter parameter to preserve transcripts with paralog projection probabilities less or equal to a given threshold (0.0 - 1.0)",
         required=False,
         type=float,
     )
-    base_parser.add_argument(
-        "-iso",
-        "--isoforms",
+    app.add_argument(
+        "-w",
+        "--with-isoforms",
         help="Path to a custom isoform table (default: None)",
         required=False,
         default=None,
         type=str,
     )
-    base_parser.add_argument(
-        "-e",
-        "--engine",
-        help="Database engine to create inner db representations (default: pandas)",
-        required=False,
-        choices=["pandas", "polars"],
-        type=str,
-        default="pandas",
-    )
-    base_parser.add_argument(
+    app.add_argument(
         "-ext",
         "--extract",
         help="Flag or option to extract sequences (only codon and protein alignments) from the filtered genes. "
@@ -391,62 +560,53 @@ def base_branch(subparsers, parent_parser):
         required=False,
         default=False,
         nargs="?",
-        const=True,
         choices=["query", "reference"],
     )
-
-
-def haplotype_branch(subparsers, parent_parser):
-    haplotype_parser = subparsers.add_parser(
-        "haplotype", help="Haplotype mode", parents=[parent_parser]
-    )
-    haplotype_parser.add_argument(
-        "-hp",
-        "--haplotype_dir",
-        help="Path to TOGA results directories separated by commas (path1,path2,path3)",
-        required=True,
-        type=str,
-    )
-    haplotype_parser.add_argument(
-        "-r",
-        "--rule",
-        help="Rule to merge haplotype assemblies (default: I>PI>UL>L>M>PM>PG>abs)",
-        required=False,
-        type=str,
-        default="I>PI>UL>L>M>PM>PG>NF",
-    )
-    haplotype_parser.add_argument(
-        "-s",
-        "--source",
-        help="Source of the haplotype classes (query, loss)",
-        required=False,
-        type=str,
-        choices=["query", "loss"],
-        default="loss",
-    )
-
-
-def parser() -> argparse.Namespace:
-    """Argument parser for postoga"""
-    app = argparse.ArgumentParser()
-    parent_parser = argparse.ArgumentParser(add_help=False)
-
-    parent_parser.add_argument(
+    app.add_argument(
         "--outdir",
         "-o",
         help="Path to posTOGA output directory",
-        required=True,
+        required=False,
         type=str,
+        default=None,
     )
-
-    subparsers = app.add_subparsers(dest="mode", help="Select mode")
-
-    base_branch(subparsers, parent_parser)
-    haplotype_branch(subparsers, parent_parser)
-
-    if len(sys.argv) < 2:
-        app.print_help()
-        sys.exit(0)
+    app.add_argument(
+        "--only-table",
+        "-ot",
+        help="Only produce the toga.table file",
+        required=False,
+        action="store_true",
+    )
+    app.add_argument(
+        "--only-convert",
+        "-oc",
+        help="Only convert the toga.table file to gtf/gff",
+        required=False,
+        action="store_true",
+    )
+    app.add_argument(
+        "-L",
+        "--level",
+        dest="log_level",
+        help="Logging verbosity (debug, info, warn, off)",
+        required=False,
+        default="info",
+        type=lambda value: value.lower(),
+        choices=["debug", "info", "warn", "off"],
+    )
+    app.add_argument(
+        "--depure",
+        "-d",
+        help="Remove any trace of other postoga runs/files",
+        required=False,
+        action="store_true",
+    )
+    app.add_argument(
+        "--version",
+        "-v",
+        action="version",
+        version=f"%(prog)s {__version__}",
+    )
 
     args = app.parse_args()
 

@@ -8,7 +8,33 @@ on:
   merge_group:
 
 jobs:
-  test:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install ruff
+        run: pipx install ruff
+      - name: Run linter
+        run: ruff check .
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install ruff
+        run: pipx install ruff
+      - name: Run formatter
+        run: ruff format --check .
+
+  test-hatch:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -25,6 +51,14 @@ jobs:
         with:
           toolchain: stable
 
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Install Hatch
         run: |
           pipx install hatch
@@ -37,3 +71,31 @@ jobs:
       - name: Run tests
         shell: bash
         run: hatch run test
+
+  test-uv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install uv
+        run: pipx install uv
+      - name: Create venv
+        run: uv venv
+      - name: Install dependencies
+        run: uv pip install -e .[test]
+      - name: Run tests
+        run: pytest
+
+  test-setup-script:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Make script executable
+        run: chmod +x setup_postoga.sh
+      - name: Run setup script
+        run: ./setup_postoga.sh
+      - name: Run tests
+        run: source .venv/bin/activate && pytest
