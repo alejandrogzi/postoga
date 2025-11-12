@@ -8,7 +8,7 @@ on:
   merge_group:
 
 jobs:
-  lint:
+  style:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,86 +16,52 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install ruff
-        run: pipx install ruff
-      - name: Run linter
+      - name: Install Ruff
+        run: python -m pip install --upgrade pip ruff
+      - name: Ruff lint
         run: ruff check .
-
-  format:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Install ruff
-        run: pipx install ruff
-      - name: Run formatter
+      - name: Ruff format check
         run: ruff format --check .
 
-  test-hatch:
+  tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11"]
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v2
+      - name: Install project
+        run: uv pip install --system -e .
+      - name: Install test tooling
+        run: uv pip install --system pytest
+      - name: Run pytest
+        run: pytest -q
 
-      - name: Set up Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-
-      - name: Cache pip dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install Hatch
-        run: |
-          pipx install hatch
-          pipx install maturin
-
-      - name: Configure
-        shell: bash
-        run: echo y | hatch run configure
-
-      - name: Run tests
-        shell: bash
-        run: hatch run test
-
-  test-uv:
+  setup-script:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Install uv
-        run: pipx install uv
-      - name: Create venv
-        run: uv venv
-      - name: Install dependencies
-        run: uv pip install -e .[test]
-      - name: Run tests
-        run: pytest
-
-  test-setup-script:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Make script executable
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v2
+      - name: Install maturin
+        run: uv tool install maturin
+      - name: Prepare environment
         run: chmod +x setup_postoga.sh
       - name: Run setup script
         run: ./setup_postoga.sh
-      - name: Run tests
-        run: source .venv/bin/activate && pytest
+      - name: Validate virtualenv
+        shell: bash
+        run: |
+          source .venv/bin/activate
+          python -m pip -V
+          python postoga.py --help
