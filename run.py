@@ -261,9 +261,9 @@ class TogaDir:
                     os.path.join(self.togadir, Constants.FileNames.CODON),
                 )
                 raise FileNotFoundError(
-                    f"ERROR: {
+                    f"""ERROR: {
                         os.path.join(self.togadir, Constants.FileNames.CODON)
-                    } is not a file!"
+                    } is not a file!"""
                 )
             if not os.path.isfile(
                 os.path.join(self.togadir, Constants.FileNames.PROTEIN)
@@ -273,9 +273,9 @@ class TogaDir:
                     os.path.join(self.togadir, Constants.FileNames.PROTEIN),
                 )
                 raise FileNotFoundError(
-                    f"ERROR: {
+                    f"""ERROR: {
                         os.path.join(self.togadir, Constants.FileNames.PROTEIN)
-                    } is not a file!"
+                    } is not a file!"""
                 )
 
         return
@@ -510,7 +510,7 @@ def parse_args() -> argparse.Namespace:
         "-bc",
         "--by-orthology-status",
         dest="orthology_status",
-        help="Filter parameter to only include certain orthology classes (FI, I, PI, UL, M, PM, L, UL)",
+        help="Include certain orthology classes (FI, I, PI, UL, M, PM, L, UL)",
         required=False,
         type=str,
     )
