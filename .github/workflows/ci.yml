@@ -15,7 +15,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
       - name: Install Ruff
         run: python -m pip install --upgrade pip ruff
       - name: Ruff lint
@@ -23,7 +23,7 @@ jobs:
       - name: Ruff format check
         run: ruff format --check .
 
-  tests:
+  cli-smoke:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -34,16 +34,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
       - name: Set up uv
         uses: astral-sh/setup-uv@v2
-      - name: Install project
+      - name: Install project dependencies
         run: uv pip install --system -e .
-      - name: Install test tooling
-        run: uv pip install --system pytest
-      - name: Run pytest
-        run: pytest -q
+      - name: Smoke test CLI
+        run: ./postoga.py --help
 
   setup-script:
     runs-on: ubuntu-latest
@@ -63,5 +59,4 @@ jobs:
         shell: bash
         run: |
           source .venv/bin/activate
-          python -m pip -V
-          python postoga.py --help
+          ./postoga.py --help

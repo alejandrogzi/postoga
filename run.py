@@ -486,6 +486,13 @@ class TogaDir:
 def parse_args() -> argparse.Namespace:
     """Argument parser for postoga"""
     app = argparse.ArgumentParser(add_help=False)
+    app.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        default=argparse.SUPPRESS,
+        help="Show this help message and exit.",
+    )
 
     app.add_argument(
         "--togadir",
