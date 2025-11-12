@@ -195,7 +195,8 @@ class TogaDir:
             self.logger.error("No .bed file found in %s", self.togadir)
             raise FileNotFoundError(f"ERROR: no .bed file found in {self.togadir}!")
 
-        # INFO: class attributes to build toga.table.gz [ only mandatory if not --with-isoforms ]
+        # INFO: class attributes to build toga.table.gz
+        # [ only mandatory if not --with-isoforms ]
         self.loss_summary = os.path.join(self.togadir, Constants.FileNames.LOSS)
         self.orthology_classification = os.path.join(
             self.togadir, Constants.FileNames.ORTHOLOGY
@@ -260,7 +261,9 @@ class TogaDir:
                     os.path.join(self.togadir, Constants.FileNames.CODON),
                 )
                 raise FileNotFoundError(
-                    f"ERROR: {os.path.join(self.togadir, Constants.FileNames.CODON)} is not a file!"
+                    f"ERROR: {
+                        os.path.join(self.togadir, Constants.FileNames.CODON)
+                    } is not a file!"
                 )
             if not os.path.isfile(
                 os.path.join(self.togadir, Constants.FileNames.PROTEIN)
@@ -270,7 +273,9 @@ class TogaDir:
                     os.path.join(self.togadir, Constants.FileNames.PROTEIN),
                 )
                 raise FileNotFoundError(
-                    f"ERROR: {os.path.join(self.togadir, Constants.FileNames.PROTEIN)} is not a file!"
+                    f"ERROR: {
+                        os.path.join(self.togadir, Constants.FileNames.PROTEIN)
+                    } is not a file!"
                 )
 
         return
@@ -457,7 +462,7 @@ class TogaDir:
             self.query_annotation = self.filtered_query_annotation
             self.table = self.custom_table
             self.logger.info(
-                "Applied filters (class=%s, rel=%s, score=%s, paralog=%s); %d rows remain",
+                "(class=%s, rel=%s, score=%s, paralog=%s); %d rows remaining",
                 self.by_orthology_class,
                 self.by_orthology_status,
                 self.by_orthology_score,
@@ -513,7 +518,7 @@ def parse_args() -> argparse.Namespace:
         "-br",
         "--by-orthology-class",
         dest="orthology_class",
-        help="Filter parameter to only include certain orthology relationships (o2o, o2m, m2m, m2m, o2z)",
+        help="Include certain orthology relationships (o2o, o2m, m2m, m2m, o2z)",
         required=False,
         type=str,
     )
@@ -521,14 +526,14 @@ def parse_args() -> argparse.Namespace:
         "-bs",
         "--by-orthology-score",
         dest="orthology_score",
-        help="Filter parameter to preserve orthology scores greater or equal to a given threshold (0.0 - 1.0)",
+        help="Preserve orthology scores greater or equal to a threshold (0.0 - 1.0)",
         required=False,
         type=float,
     )
     app.add_argument(
         "-to",
         "--to",
-        help="Specify the conversion format for .bed (query_annotation/filtered) file (gtf, gff3) or just keep it as .bed (bed)",
+        help="Specify the conversion format for .bed file (gtf, gff3)",
         required=False,
         type=str,
         choices=["gtf", "gff", "bed"],
@@ -547,7 +552,7 @@ def parse_args() -> argparse.Namespace:
         "-bp",
         "--by-paralog-score",
         dest="min_paralog_score",
-        help="Filter parameter to preserve transcripts with paralog projection probabilities less or equal to a given threshold (0.0 - 1.0)",
+        help="Preserve transcripts with paralog projection probabilities",
         required=False,
         type=float,
     )
@@ -562,8 +567,8 @@ def parse_args() -> argparse.Namespace:
     app.add_argument(
         "-ext",
         "--extract",
-        help="Flag or option to extract sequences (only codon and protein alignments) from the filtered genes. "
-        "Can be 'query', 'reference', or just set as a flag (default: False). When used as a flag extracting 'query' sequences is assumed.",
+        help="Flag or option to extract sequences from the filtered projections. "
+        "Can be 'query', 'reference', or just set as a flag (default: False).",
         required=False,
         default=False,
         nargs="?",

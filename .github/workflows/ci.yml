@@ -38,6 +38,12 @@ jobs:
         uses: astral-sh/setup-uv@v2
       - name: Install project dependencies
         run: uv pip install --system -e .
+      - name: Create virtualenv
+        run: uv venv
+      - name: Activate virtualenv
+        run: source .venv/bin/activate
+      - name: Install dependencies
+        run: uv pip install '.'
       - name: Build rustools
         run: cd rustools && maturin develop --release && cd ..
       - name: Smoke test CLI

@@ -487,7 +487,9 @@ def filter_query_annotation(
 
     info_messages = [
         f"kept {kept} projections after filters, discarded {discarded}.",
-        f"{kept} projections are coming from {unique_transcripts} unique transcripts and {unique_genes} genes",
+        f"{kept} projections from {unique_transcripts} unique tx and {
+            unique_genes
+        } genes",
         f"class stats of new bed: {class_stats}",
         f"orthology_relation stats of new bed: {status_stats}",
         f"filtered bed file written to {tmp}",
