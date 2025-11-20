@@ -20,7 +20,7 @@ except ImportError:
 
 try:
     from rustools import convert
-except ImportError as exc:  # pragma: no cover - raised only when rustools isn't built
+except ImportError as exc:
     raise ImportError(
         "ERROR: rustools extension not found; run `make configure` or "
         "`maturin develop` to build it."
@@ -29,7 +29,7 @@ except ImportError as exc:  # pragma: no cover - raised only when rustools isn't
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.10"
+__version__ = "0.10.1"
 
 
 class PostogaLogger:

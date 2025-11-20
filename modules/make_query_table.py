@@ -12,7 +12,7 @@ import pandas as pd
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.10"
+__version__ = "0.10.1"
 
 ORTHOLOGY_CLASSIFICATION_COLS = [
     "reference_gene",
