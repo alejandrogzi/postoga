@@ -16,7 +16,10 @@ __version__ = "0.10"
 
 
 def main():
-    from run import TogaDir, parse_args
+    try:
+        from .run import TogaDir, parse_args
+    except ImportError:
+        from run import TogaDir, parse_args
 
     args = parse_args()
     TogaDir(args).run()

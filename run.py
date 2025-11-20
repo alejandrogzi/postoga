@@ -11,9 +11,20 @@ from logging.handlers import RotatingFileHandler
 from types import SimpleNamespace
 from typing import Any, ClassVar, Optional, Tuple, Union
 
-from constants import Constants
-from modules.make_query_table import filter_query_annotation, table_builder
-from rustools import convert
+try:
+    from .constants import Constants
+    from .modules.make_query_table import filter_query_annotation, table_builder
+except ImportError:
+    from constants import Constants
+    from modules.make_query_table import filter_query_annotation, table_builder
+
+try:
+    from rustools import convert
+except ImportError as exc:  # pragma: no cover - raised only when rustools isn't built
+    raise ImportError(
+        "ERROR: rustools extension not found; run `make configure` or "
+        "`maturin develop` to build it."
+    ) from exc
 
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
