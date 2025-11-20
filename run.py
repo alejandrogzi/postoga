@@ -8,7 +8,8 @@ import random
 import shutil
 import time
 from logging.handlers import RotatingFileHandler
-from typing import ClassVar, Optional, Tuple, Union
+from types import SimpleNamespace
+from typing import Any, ClassVar, Optional, Tuple, Union
 
 from constants import Constants
 from modules.make_query_table import filter_query_annotation, table_builder
@@ -103,7 +104,9 @@ class PostogaLogger:
 class TogaDir:
     """A class to represent a TOGA results directory."""
 
-    def __init__(self, args: argparse.Namespace) -> None:
+    def __init__(
+        self, args: Optional[argparse.Namespace] = None, **kwargs: Any
+    ) -> None:
         """
         Constructs all the necessary attributes for the TogaDir object.
 
@@ -129,6 +132,19 @@ class TogaDir:
         ----------
         None
         """
+        if args is not None and kwargs:
+            raise ValueError(
+                "ERROR: Pass either 'args' or kwargs to TogaDir, not both."
+            )
+
+        if args is None:
+            if not kwargs:
+                raise ValueError(
+                    "ERROR: You must provide either 'args' or at least one keyword argument."
+                )
+            # Behave like argparse.Namespace
+            args = SimpleNamespace(**kwargs)
+
         self.log_level = args.log_level
         self.logger = PostogaLogger.get_logger(level=self.log_level)
         self.args = args
