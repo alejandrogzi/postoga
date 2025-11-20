@@ -27,7 +27,7 @@ except ImportError as exc:
     ) from exc
 
 __author__ = "Alejandro Gonzales-Irribarren"
-__email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
+__email__ = "alejandrxgzi@gmail.com"
 __github__ = "https://github.com/alejandrogzi"
 __version__ = "0.10.1"
 

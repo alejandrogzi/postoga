@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 __author__ = "Alejandro Gonzales-Irribarren"
-__email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
+__email__ = "alejandrxgzi@gmail.com"
 __github__ = "https://github.com/alejandrogzi"
 __version__ = "0.10.1"
 __credits__ = ["Bogdan Kirilenko", "Yury Malovichko"]

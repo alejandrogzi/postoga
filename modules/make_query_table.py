@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Tuple, Union
 import pandas as pd
 
 __author__ = "Alejandro Gonzales-Irribarren"
-__email__ = "jose.gonzalesdezavala1@unmsm.edu.pe"
+__email__ = "alejandrxgzi@gmail.com"
 __github__ = "https://github.com/alejandrogzi"
 __version__ = "0.10.1"
 
