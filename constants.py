@@ -3,7 +3,7 @@
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "alejandrxgzi@gmail.com"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.10.1"
+__version__ = "0.11"
 __credits__ = ["Bogdan Kirilenko", "Yury Malovichko"]
 
 
