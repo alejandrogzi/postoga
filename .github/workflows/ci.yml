@@ -53,6 +53,8 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: Set up uv
         uses: astral-sh/setup-uv@v2
+      - name: Install maturin
+        run: uv tool install maturin
       - name: Prepare environment
         run: chmod +x setup_postoga.sh
       - name: Run setup script
