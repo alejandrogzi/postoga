@@ -58,7 +58,7 @@ jobs:
       - name: Prepare environment
         run: chmod +x setup_postoga.sh
       - name: Create virtualenv
-        run: uv venv --python 3.10"
+        run: uv venv --python 3.10
       - name: Run setup script
         run: ./setup_postoga.sh
       - name: Validate virtualenv
