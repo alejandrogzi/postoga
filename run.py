@@ -151,7 +151,7 @@ class TogaDir:
         if args is None:
             if not kwargs:
                 raise ValueError(
-                    "ERROR: You must provide either 'args' or at least one keyword argument."
+                    "ERROR: You must provide either 'args' or kwargs to TogaDir"
                 )
             # Behave like argparse.Namespace
             args = SimpleNamespace(**kwargs)
