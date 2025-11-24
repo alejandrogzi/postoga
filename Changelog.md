@@ -65,3 +65,10 @@
 - `--depure` now deletes every POSTOGA_* run artifact from the parent output directory before creating a new run, with warnings if files cannot be removed.
 - Added `setup_postoga.sh` to bootstrap a `uv` virtual environment, install Python dependencies, and execute `maturin develop --release` for `rustools`.
 - `filter_query_annotation()` now reports per-filter discard counts plus final projection/orthology summaries so CLI and `postoga.log` users can audit thresholds easily.
+
+# postoga 0.11.0
+- Updated dependencies and bump numpy to >= 2
+
+# postoga 0.12.0
+- Changed 'orthology_status' to 'loss_status' in CLI interface
+- Updated main runner and query table maker to use 'loss_status' terminology

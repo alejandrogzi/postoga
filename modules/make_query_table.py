@@ -12,7 +12,7 @@ import pandas as pd
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "alejandrxgzi@gmail.com"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.11"
+__version__ = "0.12"
 
 ORTHOLOGY_CLASSIFICATION_COLS = [
     "reference_gene",
@@ -25,7 +25,7 @@ ORTHOLOGY_CLASSIFICATION_COLS = [
 LOSS_SUMMARY_COLS = [
     "level",
     "query_transcript",
-    "orthology_status",
+    "loss_status",
 ]
 
 ORTHOLOGY_SCORE_COLS = [
@@ -55,7 +55,7 @@ OUTPUT_TABLE_COLS = [
     "query_gene",
     "query_transcript",
     "orthology_class",
-    "orthology_status",
+    "loss_status",
     "orthology_score",
 ]
 
@@ -350,7 +350,7 @@ def table_builder(
 def filter_query_annotation(
     table: pd.DataFrame,
     by_orthology_class: Optional[Union[str, os.PathLike]],
-    by_orthology_status: Optional[Union[str, os.PathLike]],
+    by_loss_status: Optional[Union[str, os.PathLike]],
     by_orthology_score: Optional[float],
     by_paralog_score: Optional[float],
     query_annotation: Union[str, os.PathLike],
@@ -415,14 +415,14 @@ def filter_query_annotation(
                 ",".join(allowed_classes),
             )
 
-    if by_orthology_status:
+    if by_loss_status:
         edge = len(table)
         allowed_relationships = [
             relation.strip()
-            for relation in by_orthology_status.split(",")
+            for relation in by_loss_status.split(",")
             if relation.strip()
         ]
-        table = table[table["orthology_status"].isin(allowed_relationships)]
+        table = table[table["loss_status"].isin(allowed_relationships)]
         discarded = edge - len(table)
         if discarded:
             LOGGER.debug(
@@ -476,8 +476,8 @@ def filter_query_annotation(
         else {}
     )
     status_stats = (
-        filtered_table["orthology_status"].value_counts().to_dict()
-        if "orthology_status" in filtered_table
+        filtered_table["loss_status"].value_counts().to_dict()
+        if "loss_status" in filtered_table
         else {}
     )
 

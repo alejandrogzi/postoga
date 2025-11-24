@@ -29,7 +29,7 @@ except ImportError as exc:
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "alejandrxgzi@gmail.com"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.11"
+__version__ = "0.12"
 
 
 class PostogaLogger:
@@ -185,7 +185,7 @@ class TogaDir:
 
         # INFO: setting filters
         self.by_orthology_class = args.orthology_class
-        self.by_orthology_status = args.orthology_status
+        self.by_loss_status = args.loss_status
         self.by_orthology_score = args.orthology_score
         self.by_paralog_score = args.min_paralog_score
 
@@ -199,7 +199,7 @@ class TogaDir:
         self.filter_bed = any(
             [
                 self.by_orthology_class,
-                self.by_orthology_status,
+                self.by_loss_status,
                 self.by_orthology_score,
                 self.by_paralog_score,
             ]
@@ -471,7 +471,7 @@ class TogaDir:
         if any(
             [
                 self.by_orthology_class,
-                self.by_orthology_status,
+                self.by_loss_status,
                 self.by_orthology_score,
                 self.by_paralog_score,
             ]
@@ -479,7 +479,7 @@ class TogaDir:
             self.filtered_query_annotation, self.custom_table = filter_query_annotation(
                 self.table,
                 self.by_orthology_class,
-                self.by_orthology_status,
+                self.by_loss_status,
                 self.by_orthology_score,
                 self.by_paralog_score,
                 self.query_annotation,
@@ -491,7 +491,7 @@ class TogaDir:
             self.logger.info(
                 "(class=%s, rel=%s, score=%s, paralog=%s); %d rows remaining",
                 self.by_orthology_class,
-                self.by_orthology_status,
+                self.by_loss_status,
                 self.by_orthology_score,
                 self.by_paralog_score,
                 len(self.table),
@@ -534,15 +534,15 @@ def parse_args() -> argparse.Namespace:
         type=str,
     )
     app.add_argument(
-        "-bc",
-        "--by-orthology-status",
-        dest="orthology_status",
+        "-bl",
+        "--by-loss-status",
+        dest="loss_status",
         help="Include certain orthology classes (FI, I, PI, UL, M, PM, L, UL)",
         required=False,
         type=str,
     )
     app.add_argument(
-        "-br",
+        "-bc",
         "--by-orthology-class",
         dest="orthology_class",
         help="Include certain orthology relationships (o2o, o2m, m2m, m2m, o2z)",
