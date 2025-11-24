@@ -1,29 +1,25 @@
 > [!WARNING]
 >
-> postoga is dependent from [TOGA](https://github.com/hillerlab/TOGA). Any changes in TOGA will have a repercusion here. If you found any bug/errors, please report them here.
+> postoga is dependent from [TOGA2](https://github.com/hillerlab/TOGA2). Any changes in TOGA2 will have a repercusion here. If you found any bug/errors, please report them here.
 > This project is in constant development, any desired features are welcome!
 
 
 # postoga
 
-The post-[TOGA](https://github.com/hillerlab/TOGA) processing pipeline.
+The post-[TOGA](https://github.com/hillerlab/TOGA2) processing pipeline.
 
-![version](https://img.shields.io/badge/version-0.10-orange)
+![version](https://img.shields.io/badge/version-0.12-orange)
 
 <p align="center">
-    <img width=700 align="center" src="./supply/postoga_logo_git.png" >
+    <img width=700 align="center" src="./assets/postoga_logo_git.png" >
 </p>
 
 <!-- <img src="./supply/postoga_report.png" align="center"/> -->
 
-## What's new on version 0.10
+## What's new on version 0.12
 
-> - Re-implementation of postoga to match TOGA2.0 output
-> - Includes self-owned rust bed to gtf coverters through rustools
-> - Adds a reusable PostogaLogger plus `-L/--level` to switch between debug, info, warn, or fully silent runs
-> - `--depure` now cleans previous POSTOGA_* runs from the parent output directory before starting
-> - Introduces `setup_postoga.sh` to set up the `uv` virtualenv, install postoga, and run `maturin develop` automatically
-> - Filtering emits discard counts and summary stats in both stdout and `postoga.log`
+> - Changed 'orthology_status' to 'loss_status' in CLI interface
+> - Updated main runner and query table maker to use 'loss_status' terminology
 
 ## Usage
 
