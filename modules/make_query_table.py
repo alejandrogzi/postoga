@@ -341,11 +341,41 @@ def table_builder(
     orthology_table = apply_query_gene_overrides(orthology_table, query_genes_mapping)
     orthology_table = orthology_table[OUTPUT_TABLE_COLS]
 
+    # Fill and change query_genes only for fragmented projections
+    orthology_table = fill_query_genes_for_fragmented_projections(orthology_table)
+
     # Extract isoform mappings
     isoform_mappings = extract_isoform_mappings(query_annotation, orthology_table)
 
     return orthology_table, isoform_mappings
 
+
+def fill_query_genes_for_fragmented_projections(table: pd.DataFrame) -> pd.DataFrame:
+    """
+    Fill query_genes for fragmented projections.
+
+    Args:
+        table: Orthology table with query_gene and query_transcript columns
+
+    Returns:
+        DataFrame with filled query_genes
+
+    Example:
+        >>> table = fill_query_genes_for_fragmented_projections(table)
+    """
+    table = table.copy()
+
+    # Looping through the table index and checking if projection is fragmented
+    for index, row in table.iterrows():
+        query_transcript = row["query_transcript"]
+        query_gene = row["query_gene"]
+
+        if query_transcript.count("$") >= 1:
+            # If projection is fragmented, fill query_gene with query_transcript
+            fragment = query_transcript.split("$")[-1]
+            table.loc[index, "query_gene"] = f"{query_gene}_}{query_transcript}"
+
+    return table
 
 def filter_query_annotation(
     table: pd.DataFrame,
