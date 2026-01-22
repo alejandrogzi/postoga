@@ -301,11 +301,20 @@ def extract_isoform_mappings(
     Example:
         >>> isoforms = extract_isoform_mappings(annot_df, orth_df)
     """
-    return annotation[["id", "helper"]].merge(
+    isoforms = annotation[["id", "helper"]].merge(
         orthology_table[["query_gene", "query_transcript"]],
         left_on="helper",
         right_on="query_transcript",
     )[["id", "query_gene"]]
+
+    # Create mask for rows with "$"
+    mask = isoforms["id"].str.contains("$", regex=False)
+
+    # Process only rows that need updating
+    if mask.any():
+        isoforms.loc[mask, "query_gene"] = isoforms.loc[mask, "query_gene"] + "_" + isoforms.loc[mask, "id"]
+
+    return isoforms
 
 
 def table_builder(
@@ -340,9 +349,6 @@ def table_builder(
     orthology_table = merge_and_fill_orthology_data(orthology, loss, scores)
     orthology_table = apply_query_gene_overrides(orthology_table, query_genes_mapping)
     orthology_table = orthology_table[OUTPUT_TABLE_COLS]
-
-    # Fill and change query_genes only for fragmented projections
-    orthology_table = fill_query_genes_for_fragmented_projections(orthology_table)
 
     # Extract isoform mappings
     isoform_mappings = extract_isoform_mappings(query_annotation, orthology_table)
