@@ -373,7 +373,7 @@ def fill_query_genes_for_fragmented_projections(table: pd.DataFrame) -> pd.DataF
         if query_transcript.count("$") >= 1:
             # If projection is fragmented, fill query_gene with query_transcript
             fragment = query_transcript.split("$")[-1]
-            table.loc[index, "query_gene"] = f"{query_gene}_}{query_transcript}"
+            table.loc[index, "query_gene"] = f"{query_gene}_{query_transcript}"
 
     return table
 
