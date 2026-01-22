@@ -1,12 +1,11 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "postoga"
 version = "0.12"
 description = "The post-TOGA processing pipeline"
-license = { text = "MIT" }
 authors = [
     { name = "Alejandro Gonzales-Irribarren", email = "alejandrxgzi@gmail.com" },
 ]
@@ -34,6 +33,17 @@ dependencies = [
     "numpy==2.2.5",
     "pandas==2.2.3"
 ]
+
+[project.scripts]
+postoga = "postoga:main"
+
+[tool.setuptools]
+py-modules = ["postoga", "constants", "run"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["modules*"]
+namespaces = true
 
 [project.urls]
 homepage = "https://github.com/alejandrogzi/postoga"
@@ -66,22 +76,6 @@ xfail_strict = true
 addopts = ["-ra", "--showlocals", "--strict-config", "--strict-markers"]
 filterwarnings = ["ignore::PendingDeprecationWarning"]
 testpaths = ["TESTS"]
-
-[tool.hatch.metadata]
-allow-direct-references = true
-
-[tool.hatch.scripts]
-postoga = "postoga.postoga:main"
-
-[tool.hatch.envs.default]
-path = ".env"
-
-[tool.hatch.envs.default.scripts]
-fix = "ruff check --fix ."
-lint = "ruff check ."
-format = "ruff format ."
-configure = "./setup_postoga.sh"
-test = "./postoga.py --help"
 
 [[tool.hatch.envs.test.matrix]]
 python = ["3.8", "3.9", "3.10", "3.11"]
