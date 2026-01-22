@@ -356,31 +356,6 @@ def table_builder(
     return orthology_table, isoform_mappings
 
 
-def fill_query_genes_for_fragmented_projections(table: pd.DataFrame) -> pd.DataFrame:
-    """
-    Fill query_genes for fragmented projections.
-
-    Args:
-        table: Orthology table with query_gene and query_transcript columns
-
-    Returns:
-        DataFrame with filled query_genes
-
-    Example:
-        >>> table = fill_query_genes_for_fragmented_projections(table)
-    """
-    table = table.copy()
-
-    # Create mask for rows with "$"
-    mask = table["query_transcript"].str.contains("$", regex=False)
-
-    # Process only rows that need updating
-    if mask.any():
-        fragments = table.loc[mask, "query_transcript"].str.split("$").str[-1]
-        table.loc[mask, "query_gene"] = table.loc[mask, "query_gene"] + "_" + table.loc[mask, "query_transcript"]
-
-    return table
-
 def filter_query_annotation(
     table: pd.DataFrame,
     by_orthology_class: Optional[Union[str, os.PathLike]],
