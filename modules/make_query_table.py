@@ -365,15 +365,13 @@ def fill_query_genes_for_fragmented_projections(table: pd.DataFrame) -> pd.DataF
     """
     table = table.copy()
 
-    # Looping through the table index and checking if projection is fragmented
-    for index, row in table.iterrows():
-        query_transcript = row["query_transcript"]
-        query_gene = row["query_gene"]
+    # Create mask for rows with "$"
+    mask = table["query_transcript"].str.contains("$", regex=False)
 
-        if query_transcript.count("$") >= 1:
-            # If projection is fragmented, fill query_gene with query_transcript
-            fragment = query_transcript.split("$")[-1]
-            table.loc[index, "query_gene"] = f"{query_gene}_{query_transcript}"
+    # Process only rows that need updating
+    if mask.any():
+        fragments = table.loc[mask, "query_transcript"].str.split("$").str[-1]
+        table.loc[mask, "query_gene"] = table.loc[mask, "query_gene"] + "_" + table.loc[mask, "query_transcript"]
 
     return table
 
