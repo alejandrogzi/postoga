@@ -12,7 +12,7 @@ import pandas as pd
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "alejandrxgzi@gmail.com"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.12"
+__version__ = "0.13"
 
 ORTHOLOGY_CLASSIFICATION_COLS = [
     "reference_gene",
@@ -312,7 +312,7 @@ def extract_isoform_mappings(
 
     # Process only rows that need updating
     if mask.any():
-        isoforms.loc[mask, "query_gene"] = isoforms.loc[mask, "query_gene"] + "_" + isoforms.loc[mask, "id"]
+        isoforms.loc[mask, "query_gene"] = isoforms.loc[mask, "query_gene"] + "_FRAGMENT_" + isoforms.loc[mask, "id"].str.split("$").str[-1]
 
     return isoforms
 

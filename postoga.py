@@ -12,7 +12,7 @@ to pre-process files for downstream analysis.
 __author__ = "Alejandro Gonzales-Irribarren"
 __email__ = "alejandrxgzi@gmail.com"
 __github__ = "https://github.com/alejandrogzi"
-__version__ = "0.12"
+__version__ = "0.13"
 
 
 def main():
