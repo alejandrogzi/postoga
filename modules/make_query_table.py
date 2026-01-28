@@ -312,7 +312,11 @@ def extract_isoform_mappings(
 
     # Process only rows that need updating
     if mask.any():
-        isoforms.loc[mask, "query_gene"] = isoforms.loc[mask, "query_gene"] + "_FRAGMENT_" + isoforms.loc[mask, "id"].str.split("$").str[-1]
+        isoforms.loc[mask, "query_gene"] = (
+            isoforms.loc[mask, "query_gene"]
+            + "_FRAGMENT_"
+            + isoforms.loc[mask, "id"].str.split("$").str[-1]
+        )
 
     return isoforms
 
